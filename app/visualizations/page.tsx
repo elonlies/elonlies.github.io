@@ -7,23 +7,14 @@ import {
   formatVerdict,
   outcomeDistribution,
   trendComparison,
+  verdictColors,
   yearlyTrends,
+  zeroPointVerdictLabel,
 } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Visualize the record",
-  description:
-    "Explore annual Trust Score trends, False-record counts, verdict composition, and claim-type comparisons across the v2 corpus.",
-};
-
-const verdictColors: Record<string, string> = {
-  True: "#2d6651",
-  "Mostly True": "#66917f",
-  Misleading: "#b58a24",
-  Unsupported: "#806719",
-  False: "#a33a31",
-  Unresolved: "#777a72",
-  Pending: "#2258a5",
+  description: `Explore annual Trust Score trends, zero-point record counts, verdict composition, and claim-type comparisons across the ${datasetStats.versionLabel} corpus.`,
 };
 
 let verdictCursor = 0;
@@ -39,6 +30,13 @@ const verdictGradient = outcomeDistribution
 const maxAnnualRecords = Math.max(
   ...yearlyTrends.map((trend) => trend.total),
 );
+const minAnnualRecords = Math.min(
+  ...yearlyTrends.map((trend) => trend.total),
+);
+
+function formatPeriodScore(score: number | null) {
+  return score === null ? "Not scored" : `${score.toFixed(1)}%`;
+}
 
 export default function VisualizationsPage() {
   return (
@@ -49,7 +47,9 @@ export default function VisualizationsPage() {
             <span aria-hidden="true">←</span> Back to overview
           </Link>
           <div className="method-hero">
-            <p className="eyebrow">Visualization section · Dataset v2</p>
+            <p className="eyebrow">
+              Visualization section · Dataset {datasetStats.versionLabel}
+            </p>
             <h1>See the pattern, not just the headline.</h1>
             <p className="lede">
               Annual trends, raw counts, verdict composition, and claim-type
@@ -75,51 +75,71 @@ export default function VisualizationsPage() {
         <div className="trend-readout" aria-label="Five-year trend comparison">
           <div>
             <span>{trendComparison.earlier.label}</span>
-            <strong>{trendComparison.earlier.score.toFixed(1)}%</strong>
+            <strong>{formatPeriodScore(trendComparison.earlier.score)}</strong>
             <small>{trendComparison.earlier.count} scored claims</small>
           </div>
           <div>
             <span>{trendComparison.recent.label}</span>
-            <strong>{trendComparison.recent.score.toFixed(1)}%</strong>
+            <strong>{formatPeriodScore(trendComparison.recent.score)}</strong>
             <small>{trendComparison.recent.count} scored claims</small>
           </div>
           <div>
             <span>Change</span>
             <strong>
-              {trendComparison.delta > 0 ? "+" : ""}
-              {trendComparison.delta.toFixed(1)} pts
+              {trendComparison.delta === null
+                ? "Not enough data"
+                : `${trendComparison.delta > 0 ? "+" : ""}${trendComparison.delta.toFixed(1)} pts`}
             </strong>
-            <small>Higher recent-window score</small>
+            <small>
+              {trendComparison.delta === null
+                ? "One window has no scored claims"
+                : trendComparison.delta > 0
+                  ? "Higher recent-window score"
+                  : trendComparison.delta < 0
+                    ? "Lower recent-window score"
+                    : "No change between windows"}
+            </small>
           </div>
         </div>
 
         <div className="callout callout--warning visualization-caveat">
           <strong>The chart does not prove an honesty trend.</strong>
           <p>
-            The 2021–2025 window scores higher than 2016–2020 in this corpus, but
-            annual samples range from 1 to 15 records and the topics selected
-            change over time. This is a view of the tracked dataset, not a random
-            sample of everything Musk said in each year. “False” also does not by
-            itself establish a deliberate lie.
+            The {trendComparison.recent.label} window can be compared with{" "}
+            {trendComparison.earlier.label} in this corpus, but annual samples
+            range from {minAnnualRecords} to {maxAnnualRecords} records and the
+            topics selected change over time. This is a view of the tracked
+            dataset, not a random sample of everything Musk said in each year. A{" "}
+            {zeroPointVerdictLabel} verdict also does not by itself establish a
+            deliberate lie.
           </p>
         </div>
 
-        <YearlyTrendChart trends={yearlyTrends} />
+        <YearlyTrendChart
+          trends={yearlyTrends}
+          zeroPointLabel={zeroPointVerdictLabel}
+        />
       </section>
 
       <section className="section page-shell section--ruled">
         <div className="section-heading">
           <div>
             <p className="eyebrow">Raw annual volume</p>
-            <h2>False records per year, with the denominator visible.</h2>
+            <h2>
+              {zeroPointVerdictLabel} records per year, with the denominator
+              visible.
+            </h2>
           </div>
           <p>
             Bar length shows how many records the corpus tracks in that year. Red
-            shows the subset classified False.
+            shows the zero-point subset classified {zeroPointVerdictLabel}.
           </p>
         </div>
 
-        <div className="annual-volume" aria-label="False and total records by year">
+        <div
+          className="annual-volume"
+          aria-label={`${zeroPointVerdictLabel} and total records by year`}
+        >
           {yearlyTrends.map((trend) => (
             <div className="annual-volume__row" key={`${trend.year}-volume`}>
               <strong>{trend.year}</strong>
@@ -139,7 +159,7 @@ export default function VisualizationsPage() {
                 </span>
               </div>
               <span>
-                {trend.falseCount} False / {trend.total} tracked
+                {trend.falseCount} {zeroPointVerdictLabel} / {trend.total} tracked
               </span>
             </div>
           ))}

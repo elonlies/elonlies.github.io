@@ -15,9 +15,8 @@ import {
 } from "@/lib/data";
 
 export const metadata: Metadata = {
-  title: "Why Elon Musk scores 36%",
-  description:
-    "The calculation, organization breakdowns, outcome distribution, alternative-weight calculator, and all 100 evidence records.",
+  title: `Why Elon Musk scores ${datasetStats.roundedScore}%`,
+  description: `The calculation, organization breakdowns, outcome distribution, alternative-weight calculator, and all ${datasetStats.totalRecords} evidence records.`,
 };
 
 export default function ScorePage() {
@@ -46,7 +45,8 @@ export default function ScorePage() {
               </h1>
               <p className="lede">
                 Based on his record of verifiable public statements and promises in
-                this tracked dataset, Elon Musk is not trustworthy.
+                this tracked dataset, Elon Musk is{" "}
+                {datasetStats.conclusion.toLowerCase()} under the published rubric.
               </p>
             </div>
             <div className="formula-card">
@@ -126,7 +126,9 @@ export default function ScorePage() {
           <div>
             <div className="subsection-heading">
               <p className="eyebrow">Score by primary domain</p>
-              <h2>Four subject areas, disclosed separately.</h2>
+              <h2>
+                {datasetStats.domainCount} subject areas, disclosed separately.
+              </h2>
               <p>
                 Weighted score among included records. Every result shows its
                 denominator.
@@ -153,8 +155,9 @@ export default function ScorePage() {
           <p className="eyebrow">All {datasetStats.totalRecords} records</p>
           <h2>Canonical verdict distribution.</h2>
           <p>
-            Display labels adapt to promises and forecasts, while these seven
-            categories keep the numerical model consistent.
+            Display labels adapt to promises and forecasts, while these{" "}
+            {datasetStats.primaryVerdictCount} categories keep the numerical model
+            consistent.
           </p>
         </div>
         <OutcomeLedger />
@@ -176,6 +179,9 @@ export default function ScorePage() {
             scoreGroups={scoreGroups}
             scoredClaimCount={datasetStats.scoredClaims}
             publishedScore={datasetStats.exactScore}
+            pointsEarned={datasetStats.pointsEarned}
+            pointsPossible={datasetStats.pointsPossible}
+            maxScorePoints={datasetStats.maxScorePoints}
           />
         </div>
       </section>

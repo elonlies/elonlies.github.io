@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { downloadByRole } from "@/lib/data";
 
 export function SiteFooter() {
   return (
@@ -14,7 +15,7 @@ export function SiteFooter() {
           <Link href="/score#evidence">Browse all claims</Link>
           <Link href="/visualizations">Explore visualizations</Link>
           <Link href="/methodology">Read the methodology</Link>
-          <a href="/downloads/elon_musk_claims_verified_v2.csv" download>
+          <a href={downloadByRole.claims.href} download>
             Download the CSV
           </a>
         </div>

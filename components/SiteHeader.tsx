@@ -1,4 +1,5 @@
 import Link from "next/link";
+import { datasetStats, formatDate } from "@/lib/data";
 import { primaryNavigation } from "@/lib/site";
 
 export function SiteHeader() {
@@ -23,9 +24,9 @@ export function SiteHeader() {
           ))}
         </nav>
         <p className="dataset-stamp">
-          <span>Dataset v2</span>
+          <span>Dataset {datasetStats.versionLabel}</span>
           <span aria-hidden="true">·</span>
-          <span>Evaluated Jul 26, 2026</span>
+          <span>Evaluated {formatDate(datasetStats.evaluationDate)}</span>
         </p>
       </div>
     </header>

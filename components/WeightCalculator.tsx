@@ -13,10 +13,16 @@ export function WeightCalculator({
   scoreGroups,
   scoredClaimCount,
   publishedScore,
+  pointsEarned,
+  pointsPossible,
+  maxScorePoints,
 }: {
   scoreGroups: ScoreGroup[];
   scoredClaimCount: number;
   publishedScore: number;
+  pointsEarned: number;
+  pointsPossible: number;
+  maxScorePoints: number;
 }) {
   const [weights, setWeights] = useState<Record<string, number>>(
     Object.fromEntries(scoreGroups.map((group) => [group.id, group.published])),
@@ -24,11 +30,11 @@ export function WeightCalculator({
 
   const score = useMemo(() => {
     const points = scoreGroups.reduce(
-      (total, group) => total + group.count * (weights[group.id] / 100),
+      (total, group) => total + group.count * weights[group.id],
       0,
     );
-    return (points / scoredClaimCount) * 100;
-  }, [scoreGroups, scoredClaimCount, weights]);
+    return (points / (scoredClaimCount * maxScorePoints)) * 100;
+  }, [maxScorePoints, scoreGroups, scoredClaimCount, weights]);
 
   const reset = () => {
     setWeights(
@@ -44,7 +50,9 @@ export function WeightCalculator({
           <strong>{score.toFixed(1)}</strong>
           <small>%</small>
         </div>
-        <div title={`Published fraction: 2,950 / 8,300 points`}>
+        <div
+          title={`Published fraction: ${pointsEarned.toLocaleString("en-US")} / ${pointsPossible.toLocaleString("en-US")} points`}
+        >
           <span>Published score</span>
           <strong>{publishedScore.toFixed(1)}</strong>
           <small>%</small>
@@ -66,8 +74,8 @@ export function WeightCalculator({
               id={`weight-${group.id}`}
               type="range"
               min="0"
-              max="100"
-              step="5"
+              max={maxScorePoints}
+              step={Math.max(maxScorePoints / 20, 1)}
               value={weights[group.id]}
               onChange={(event) =>
                 setWeights((current) => ({

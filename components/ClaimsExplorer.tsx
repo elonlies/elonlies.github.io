@@ -103,6 +103,11 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
         claim.primary_domain,
         claim.verdict_category,
         claim.display_verdict,
+        claim.related_entity,
+        claim.relationship_to_entity,
+        claim.public_discourse_category,
+        claim.assertion_mode,
+        claim.correction_status,
       ]
         .join(" ")
         .toLowerCase();

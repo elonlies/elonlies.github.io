@@ -1,28 +1,23 @@
 # Elon Musk Trust Score
 
-A modern, evidence-led website for a 100-record corpus of Elon Musk’s public
-claims, promises, forecasts, and outcomes.
+A modern, evidence-led visualizer for a citation-backed corpus of Elon Musk’s
+public claims, promises, forecasts, and outcomes.
 
-The project presents one provisional headline score—**36%, Not
-Trustworthy** (35.5 before rounding)—while keeping the calculation, every
-excluded record, every verdict, and every citation open to inspection. It does
-not label every failed claim a lie or claim that the corpus represents
-everything Musk has ever said.
+The application does not maintain a second copy of the score in React. Record
+counts, score math, verdicts, groupings, trend windows, citations, downloads,
+social metadata, and claim routes are generated from the current data package
+at build time.
 
 ## What is included
 
-- A direct homepage conclusion with visible scope and caveats
+- A percentage Trust Score with its exact points fraction on hover
 - Full score calculation plus domain and organization breakdowns
-- Outcome distribution across all 100 records
-- Annual Trust Score and False-share trend lines with sample-size details
-- Raw yearly False counts, overall verdict composition, and claim-type comparisons
+- Outcome distribution and annual trend visualizations
+- Raw yearly zero-point counts with sample-size details
 - Interactive alternative-weight calculator
 - Searchable, filterable evidence index with shareable query parameters
-- A dedicated detail page for every record
-- Source links, scoring notes, confidence, credible-source contestation, and
-  deception-intent status
-- Methodology, selection-bias disclosure, correction policy, and downloads
-- A row-by-row v1-to-v2 migration audit with stable record IDs
+- A dedicated detail page and source chain for every record
+- Current classification rules, rating bands, methodology, and downloads
 - Responsive, keyboard-accessible, print-friendly presentation
 
 ## Requirements
@@ -42,43 +37,62 @@ Open [http://localhost:3000](http://localhost:3000).
 ## Validate a production build
 
 ```bash
+npm run lint
 npm test
 ```
 
-This regenerates the JSON data from the checked-in CSV sources, creates the
-static GitHub Pages export, then verifies the homepage, score page, all 100 claim
-routes, visualization page, public downloads, social metadata, and core dataset
-invariants.
+`npm test` validates the package, regenerates application data and public
+downloads, creates the static GitHub Pages export, and verifies every generated
+claim route plus the dataset invariants.
 
-## Data workflow
+## Data architecture
 
-The authoritative v2 project copies live in `data/`:
+`data/` is the only authoritative data directory. It must contain exactly one
+complete, current package:
 
-- `elon_musk_claims_verified_v2.csv`
-- `elon_musk_claims_summary_v2.csv`
-- `elon_musk_claims_classification_key_v2.csv`
-- `elon_musk_claims_migration_v1_to_v2.csv`
-- `elon_musk_claims_methodology_v2.md`
+- `elon_musk_claims_verified_vN.csv`
+- `elon_musk_claims_summary_vN.csv`
+- `elon_musk_claims_classification_key_vN.csv`
+- `elon_musk_claims_migration_vPREVIOUS_to_vN.csv`
+- `elon_musk_claims_methodology_vN.md`
 
-The original v1 source package remains in `source-data/` for historical
-auditability.
+The importer discovers `vN` from the filenames and checks it against the
+row-level `schema_version`. It does not contain a current-version filename,
+record count, score, verdict list, or category list.
 
-Run this after changing any v2 source file:
+The row-level claims CSV drives everything displayed by the site. The summary
+CSV is reconciled against those rows, the classification key defines score
+categories and weights, and the migration CSV must cover every current record
+ID exactly once. Generated JSON lives in ignored `generated-data/`; synchronized
+visitor downloads live in ignored `public/downloads/`. Git history is the
+archive for older packages.
+
+Run the importer directly when working on data:
 
 ```bash
 npm run data:build
 ```
 
-The importer is BOM-aware, handles quoted CSV fields, verifies 100 unique record
-IDs, reconciles every row to the seven-category classification key and migration
-map, requires a statement source plus a primary outcome source, and verifies the
-published 2,950-of-8,300-point score. It writes the generated JSON application
-data alongside the authoritative CSVs in `data/`.
+It validates:
 
-The importer also keeps matching visitor downloads under `public/downloads/`
-in sync. When updating the corpus, change the v2 files in `data/`, preserve all
-existing record IDs, rerun the importer, and document corrections in version
-control.
+- one complete package and one target version
+- CSV shape, required columns, and unique stable record IDs
+- statement and primary-outcome citations for every claim
+- score and inclusion consistency with each Primary verdict rule
+- exact score, verdict counts, and all published group summaries
+- one migration row per current claim
+- methodology version and evaluation-date metadata
+
+## Contributing evidence
+
+Data-only pull requests should not edit React code, generated JSON, public
+downloads, or score copy. See [CONTRIBUTING.md](CONTRIBUTING.md) for the short
+correction, new-record, and full-version workflows.
+
+For a full dataset update, remove the current five files from `data/`, add the
+new five-file package with matching target versions, and run `npm test`. If the
+package is internally consistent, the entire site updates without source-code
+changes.
 
 ## GitHub Pages deployment
 
@@ -89,14 +103,14 @@ server at runtime.
 npm run build
 ```
 
-The deployable site is written to `out/`. To preview that exact output locally:
+The deployable site is written to `out/`. Preview that exact output locally with:
 
 ```bash
 npm start
 ```
 
-The workflow at `.github/workflows/deploy-pages.yml` builds and publishes `out/`
-whenever `main` is pushed.
+The workflow at `.github/workflows/deploy-pages.yml` validates pull requests and
+publishes `out/` whenever `main` is pushed.
 
 One repository setting is required:
 
@@ -109,7 +123,7 @@ If the public URL displays this README, Pages is still using the legacy
 
 ## Editorial note
 
-“Not trustworthy” is the disclosed conclusion of an editorial scoring model
-applied to this tracked corpus. A wrong prediction, broken promise, or
+The displayed conclusion is the disclosed result of an editorial scoring model
+applied to the tracked corpus. A wrong prediction, broken promise, or
 unsupported assertion does not by itself prove deliberate deception. The
 project is independent and unaffiliated with Elon Musk or any of his companies.

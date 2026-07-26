@@ -3,9 +3,12 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
   claimScore,
+  claimSources,
   claims,
   datasetStats,
   findClaim,
+  findClassificationRule,
+  findMigration,
   formatDate,
   formatVerdict,
   verdictTone,
@@ -32,23 +35,16 @@ export async function generateMetadata({
   };
 }
 
-function scoreExplanation(score: number | null, exclusionReason: string) {
+function scoreExplanation(
+  score: number | null,
+  exclusionReason: string,
+  verdict: string,
+) {
   if (score === null) {
     return `Excluded from the ${datasetStats.roundedScore}% calculation. ${exclusionReason}`;
   }
-  if (score === 100) {
-    return "Full credit under the v2 rubric because the central claim was supported or the commitment was fulfilled materially as stated and on time.";
-  }
-  if (score === 75) {
-    return "Three-quarter credit under the v2 rubric because the central claim held up with a limited qualification, delay, or scope deviation.";
-  }
-  if (score === 50) {
-    return "Half credit under the v2 rubric because missing context, reduced scope, capability limits, or deadline performance materially changed the takeaway.";
-  }
-  if (score === 25) {
-    return "Quarter credit under the v2 rubric because adequate credible support was unavailable, without enough evidence for a definitive False verdict.";
-  }
-  return "No credit under the v2 rubric because reliable evidence contradicted the central claim or the mature commitment was unfulfilled or reversed.";
+  const rule = findClassificationRule(verdict);
+  return `${score} of ${datasetStats.maxScorePoints} points under the ${datasetStats.versionLabel} rubric. ${rule?.definition ?? "See the classification key for the current scoring rule."}`;
 }
 
 function ExternalSource({
@@ -78,6 +74,8 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
   if (!claim) notFound();
 
   const score = claimScore(claim);
+  const sources = claimSources(claim);
+  const migrationRow = findMigration(claim.record_id);
   const claimIndex = claims.findIndex((item) => item.record_id === claim.record_id);
   const previousClaim = claimIndex > 0 ? claims[claimIndex - 1] : null;
   const nextClaim =
@@ -106,7 +104,9 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                 {claim.display_verdict}
               </span>
               <span className="claim-detail__score">
-                {score === null ? "Excluded from score" : `${score.toFixed(0)} / 100 points`}
+                {score === null
+                  ? "Excluded from score"
+                  : `${score.toFixed(0)} / ${datasetStats.maxScorePoints} points`}
               </span>
               <span>{claim.confidence} confidence</span>
               {claim.credible_sources_contest_claim === "Yes" ? (
@@ -156,7 +156,13 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                 <div>
                   <p className="eyebrow">Verdict and score</p>
                   <h3>{claim.display_verdict}</h3>
-                  <p>{scoreExplanation(score, claim.exclusion_reason)}</p>
+                  <p>
+                    {scoreExplanation(
+                      score,
+                      claim.exclusion_reason,
+                      claim.verdict_category,
+                    )}
+                  </p>
                 </div>
               </li>
             </ol>
@@ -167,6 +173,30 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
               <p className="eyebrow">Record details</p>
               <h2 id="record-details-title">How this row was evaluated.</h2>
               <dl className="detail-list">
+                {claim.related_entity ? (
+                  <div>
+                    <dt>Related entity</dt>
+                    <dd>{claim.related_entity}</dd>
+                  </div>
+                ) : null}
+                {claim.relationship_to_entity ? (
+                  <div>
+                    <dt>Relationship to entity</dt>
+                    <dd>{claim.relationship_to_entity}</dd>
+                  </div>
+                ) : null}
+                {claim.public_discourse_category ? (
+                  <div>
+                    <dt>Public discourse category</dt>
+                    <dd>{claim.public_discourse_category}</dd>
+                  </div>
+                ) : null}
+                {claim.assertion_mode ? (
+                  <div>
+                    <dt>Assertion mode</dt>
+                    <dd>{claim.assertion_mode}</dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt>Deadline result</dt>
                   <dd>{claim.deadline_result}</dd>
@@ -186,7 +216,9 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                 <div>
                   <dt>Score points</dt>
                   <dd>
-                    {score === null ? "Not scored" : `${score} / 100`}
+                    {score === null
+                      ? "Not scored"
+                      : `${score} / ${datasetStats.maxScorePoints}`}
                   </dd>
                 </div>
                 <div>
@@ -213,6 +245,36 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                     <dd>{claim.contestation_resolution}</dd>
                   </div>
                 ) : null}
+                {claim.correction_status ? (
+                  <div>
+                    <dt>Correction status</dt>
+                    <dd>{claim.correction_status}</dd>
+                  </div>
+                ) : null}
+                {claim.correction_date ? (
+                  <div>
+                    <dt>Correction date</dt>
+                    <dd>{formatDate(claim.correction_date)}</dd>
+                  </div>
+                ) : null}
+                {claim.deleted_after_challenge ? (
+                  <div>
+                    <dt>Deleted after challenge</dt>
+                    <dd>{claim.deleted_after_challenge}</dd>
+                  </div>
+                ) : null}
+                {claim.repeated_after_correction ? (
+                  <div>
+                    <dt>Repeated after correction</dt>
+                    <dd>{claim.repeated_after_correction}</dd>
+                  </div>
+                ) : null}
+                {claim.documented_repetition_count ? (
+                  <div>
+                    <dt>Documented repetition count</dt>
+                    <dd>{claim.documented_repetition_count}</dd>
+                  </div>
+                ) : null}
               </dl>
             </section>
 
@@ -237,23 +299,14 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
               <h2 id="sources-title">Read the underlying sources.</h2>
             </div>
             <div className="source-grid">
-              <ExternalSource
-                href={claim.statement_source_url}
-                title={claim.statement_source_title}
-                label={`Original statement · ${claim.statement_source_tier}`}
-              />
-              <ExternalSource
-                href={claim.outcome_source_1_url}
-                title={claim.outcome_source_1_title}
-                label="Primary outcome source"
-              />
-              {claim.outcome_source_2_url && claim.outcome_source_2_title ? (
+              {sources.map((source) => (
                 <ExternalSource
-                  href={claim.outcome_source_2_url}
-                  title={claim.outcome_source_2_title}
-                  label="Additional outcome source"
+                  href={source.href}
+                  title={source.title}
+                  label={source.label}
+                  key={source.key}
                 />
-              ) : null}
+              ))}
             </div>
           </section>
 
@@ -264,20 +317,19 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
             </div>
             <dl>
               <div>
-                <dt>v2 classification rationale</dt>
+                <dt>{datasetStats.versionLabel} classification rationale</dt>
                 <dd>{claim.classification_rationale}</dd>
               </div>
-              <div>
-                <dt>v1 → v2 audit</dt>
-                <dd>
-                  {claim.legacy_verdict} at{" "}
-                  {claim.legacy_weighted_reliability_score
-                    ? `${Number(claim.legacy_weighted_reliability_score) * 100} / 100`
-                    : "not scored"}{" "}
-                  became {formatVerdict(claim.verdict_category)} at{" "}
-                  {score === null ? "not scored" : `${score} / 100`}.
-                </dd>
-              </div>
+              {migrationRow ? (
+                <div>
+                  <dt>{datasetStats.migrationLabel} audit</dt>
+                  <dd>
+                    {migrationRow.change_type || "Updated"}.{" "}
+                    {migrationRow.change_note ||
+                      "See the migration CSV for the row-level history."}
+                  </dd>
+                </div>
+              ) : null}
               <div>
                 <dt>Selection basis</dt>
                 <dd>{claim.selection_basis}</dd>

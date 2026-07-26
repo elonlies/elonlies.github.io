@@ -8,12 +8,13 @@
   "scripts": {
     "data:build": "node scripts/import-data.mjs",
     "og:build": "node scripts/generate-og.mjs",
-    "predev": "npm run data:build",
+    "predev": "npm run data:build && npm run og:build",
     "prebuild": "npm run data:build && npm run og:build",
+    "prelint": "npm run data:build",
     "dev": "next dev",
     "build": "next build",
     "start": "node scripts/serve-static.mjs",
-    "test": "npm run build && node --test tests/static-export.test.mjs",
+    "test": "npm run build && node --test tests/*.test.mjs",
     "lint": "eslint ."
   },
   "dependencies": {

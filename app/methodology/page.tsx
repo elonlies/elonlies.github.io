@@ -1,22 +1,33 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import {
+  claimTypeScores,
   classificationKey,
+  datasetDownloads,
   datasetStats,
+  domainScores,
   formatDate,
+  migrationChanges,
+  organizationNames,
   ratingBands,
   verdictTone,
 } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: "Methodology",
-  description:
-    "The v2 sources, classification key, scoring rules, selection limits, update policy, migration trail, and downloads for the Elon Musk Trust Score.",
+  description: `The ${datasetStats.versionLabel} sources, classification key, scoring rules, selection limits, update policy, migration trail, and downloads for the Elon Musk Trust Score.`,
 };
 
 const scoredRules = classificationKey.filter(
   (rule) => rule.included_in_score === "Yes",
 );
+const excludedRules = classificationKey.filter(
+  (rule) => rule.included_in_score === "No",
+);
+const organizationList = new Intl.ListFormat("en-US", {
+  style: "long",
+  type: "conjunction",
+}).format(organizationNames);
 
 export default function MethodologyPage() {
   return (
@@ -28,13 +39,14 @@ export default function MethodologyPage() {
           </Link>
           <div className="method-hero">
             <p className="eyebrow">
-              Dataset v2 · Evaluated {formatDate(datasetStats.evaluationDate)}
+              Dataset {datasetStats.versionLabel} · Evaluated{" "}
+              {formatDate(datasetStats.evaluationDate)}
             </p>
             <h1>How the Trust Score works.</h1>
             <p className="lede">
               The score is an editorial model applied to a manually researched,
-              source-backed corpus. Its rules, limits, and v1-to-v2 changes remain
-              as inspectable as its conclusion.
+              source-backed corpus. Its rules, limits, source package, and migration
+              trail remain as inspectable as its conclusion.
             </p>
           </div>
         </div>
@@ -49,8 +61,7 @@ export default function MethodologyPage() {
             <p>
               The corpus contains {datasetStats.totalRecords} concrete Elon Musk
               statements, commitments, forecasts, promises, and factual assertions
-              spanning Tesla, SpaceX, X/Twitter, Neuralink, The Boring Company, and
-              public discourse.
+              spanning {organizationList}.
             </p>
             <p>
               It is not literally every sentence Musk has spoken or posted. That
@@ -108,9 +119,11 @@ export default function MethodologyPage() {
             </ol>
             <p>
               Every row includes a statement-source URL and at least one
-              outcome-source URL. Statements are paraphrased to reduce quotation
-              errors and preserve fair-use restraint; the linked source carries the
-              original context.
+              outcome-source URL. The current package contains{" "}
+              {datasetStats.citationCount} citation placements across{" "}
+              {datasetStats.uniqueSourceCount} distinct URLs. Statements are
+              paraphrased to reduce quotation errors and preserve fair-use
+              restraint; the linked source carries the original context.
             </p>
           </div>
         </section>
@@ -119,10 +132,13 @@ export default function MethodologyPage() {
           <div className="method-section__number">03</div>
           <div>
             <p className="eyebrow">Scoring</p>
-            <h2>Five scored categories, two visible exclusions.</h2>
+            <h2>
+              {datasetStats.scoredVerdictCount} scored categories,{" "}
+              {datasetStats.excludedVerdictCount} visible exclusions.
+            </h2>
             <p>
-              The v2 Trust Score is total points earned divided by total points
-              possible. The current corpus earns{" "}
+              The {datasetStats.versionLabel} Trust Score is total points earned
+              divided by total points possible. The current corpus earns{" "}
               {datasetStats.pointsEarned.toLocaleString("en-US")} of{" "}
               {datasetStats.pointsPossible.toLocaleString("en-US")} possible
               points across {datasetStats.scoredClaims} scored claims:{" "}
@@ -141,10 +157,10 @@ export default function MethodologyPage() {
               ))}
             </div>
             <p className="fine-print">
-              Unresolved and Pending rows receive no score and remain visible.
-              Unsupported receives 25 points because the available record did not
-              justify full trust but also did not justify a definitive False
-              verdict.
+              {excludedRules.map((rule) => rule.classification).join(" and ")} rows
+              receive no score and remain visible. Every score-bearing category and
+              point value above comes directly from the current classification-key
+              CSV.
             </p>
           </div>
         </section>
@@ -179,9 +195,8 @@ export default function MethodologyPage() {
               <strong>Contestation is a badge, not a verdict.</strong>
               <p>
                 {datasetStats.contestedClaims} records are explicitly contested by
-                credible sources. A contested claim can still be True, Mostly True,
-                Misleading, Unsupported, False, or Unresolved after the evidence is
-                evaluated.
+                credible sources. Contestation remains independent of the primary
+                verdict after the total evidence is evaluated.
               </p>
             </div>
             <div className="callout">
@@ -222,38 +237,25 @@ export default function MethodologyPage() {
             <p className="eyebrow">Structure</p>
             <h2>Claim types and primary domains stay separate.</h2>
             <ol className="source-hierarchy">
-              <li>
-                <strong>Factual Assertion.</strong>
-                <span>A testable statement about what is or was true.</span>
-              </li>
-              <li>
-                <strong>Promise or Commitment.</strong>
-                <span>
-                  A future action or capability substantially within Musk’s or an
-                  organization’s control.
-                </span>
-              </li>
-              <li>
-                <strong>Prediction or Forecast.</strong>
-                <span>
-                  A forecast about a future result, including outcomes not fully
-                  under his control.
-                </span>
-              </li>
-              <li>
-                <strong>Opinion or Rhetoric.</strong>
-                <span>
-                  Normally excluded unless it contains a separable factual
-                  proposition.
-                </span>
-              </li>
+              {claimTypeScores.map((type) => (
+                <li key={type.name}>
+                  <strong>{type.name}.</strong>
+                  <span>
+                    {type.totalRecords} tracked record
+                    {type.totalRecords === 1 ? "" : "s"}; {type.count} included in
+                    the score.
+                  </span>
+                </li>
+              ))}
             </ol>
             <p>
-              Primary domains normalize the subject matter into Business &
-              Technology, Politics & Government, Science & Health, Personal &
-              Legal, and Media & Society. The current seed corpus contains no
-              dedicated Personal & Legal row, but the schema supports future
-              additions.
+              The current CSV supplies {domainScores.length} primary domains:{" "}
+              {new Intl.ListFormat("en-US", {
+                style: "long",
+                type: "conjunction",
+              }).format(domainScores.map((domain) => domain.name))}
+              . These names and their counts update automatically when the row-level
+              data changes.
             </p>
           </div>
         </section>
@@ -294,8 +296,8 @@ export default function MethodologyPage() {
             <p className="eyebrow">Maintenance</p>
             <h2>Corrections should leave a trail.</h2>
             <ul className="policy-list">
-              <li>Preserve every existing record ID and legacy field.</li>
-              <li>Add new claims as new rows instead of overwriting history.</li>
+              <li>Preserve every existing record ID and correction history.</li>
+              <li>Add new claims as new rows and document corrections in migration.</li>
               <li>Recheck Pending and Unresolved rows on a fixed cadence.</li>
               <li>Keep evaluation dates and outcome sources current.</li>
               <li>Publish corrections and scoring changes in version control.</li>
@@ -307,23 +309,19 @@ export default function MethodologyPage() {
             </ul>
             <div className="changelog">
               <div>
-                <span>v2</span>
-                <time dateTime="2026-07-26">July 26, 2026</time>
+                <span>{datasetStats.versionLabel}</span>
+                <time dateTime={datasetStats.evaluationDate}>
+                  {formatDate(datasetStats.evaluationDate)}
+                </time>
               </div>
               <p>
-                Replaced eleven legacy outcomes with seven canonical categories,
-                normalized claim types and domains, added contestation status, and
-                published a row-by-row migration audit.
-              </p>
-            </div>
-            <div className="changelog">
-              <div>
-                <span>v1</span>
-                <time dateTime="2026-07-26">July 26, 2026</time>
-              </div>
-              <p>
-                Initial 100-record corpus, summary metrics, scoring rubric, and
-                source methodology.
+                {migrationChanges
+                  .map(
+                    (change) =>
+                      `${change.count} record${change.count === 1 ? "" : "s"} ${change.label.toLowerCase()}`,
+                  )
+                  .join("; ")}
+                . The row-by-row migration CSV preserves the complete update trail.
               </p>
             </div>
           </div>
@@ -333,43 +331,22 @@ export default function MethodologyPage() {
           <div className="method-section__number">09</div>
           <div>
             <p className="eyebrow">Downloads</p>
-            <h2>Inspect or reuse the complete v2 package.</h2>
+            <h2>
+              Inspect or reuse the complete {datasetStats.versionLabel} package.
+            </h2>
             <div className="download-links download-links--left">
-              <a
-                className="button"
-                href="/downloads/elon_musk_claims_verified_v2.csv"
-                download
-              >
-                Row-level CSV
-              </a>
-              <a
-                className="button button--secondary"
-                href="/downloads/elon_musk_claims_summary_v2.csv"
-                download
-              >
-                Summary CSV
-              </a>
-              <a
-                className="button button--secondary"
-                href="/downloads/elon_musk_claims_classification_key_v2.csv"
-                download
-              >
-                Classification key
-              </a>
-              <a
-                className="button button--secondary"
-                href="/downloads/elon_musk_claims_migration_v1_to_v2.csv"
-                download
-              >
-                v1 → v2 migration
-              </a>
-              <a
-                className="button button--secondary"
-                href="/downloads/elon_musk_claims_methodology_v2.md"
-                download
-              >
-                Full methodology
-              </a>
+              {datasetDownloads.map((download, index) => (
+                <a
+                  className={
+                    index === 0 ? "button" : "button button--secondary"
+                  }
+                  href={download.href}
+                  download
+                  key={download.role}
+                >
+                  {download.label}
+                </a>
+              ))}
             </div>
           </div>
         </section>

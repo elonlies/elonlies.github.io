@@ -16,7 +16,13 @@ function formatValue(value: number | null) {
   return value === null ? "Not scored" : `${value.toFixed(1)}%`;
 }
 
-export function YearlyTrendChart({ trends }: { trends: YearlyTrend[] }) {
+export function YearlyTrendChart({
+  trends,
+  zeroPointLabel,
+}: {
+  trends: YearlyTrend[];
+  zeroPointLabel: string;
+}) {
   const [activeIndex, setActiveIndex] = useState<number | null>(null);
   const innerWidth = width - plot.left - plot.right;
   const innerHeight = height - plot.top - plot.bottom;
@@ -57,7 +63,7 @@ export function YearlyTrendChart({ trends }: { trends: YearlyTrend[] }) {
         </span>
         <span>
           <i className="trend-chart__swatch trend-chart__swatch--false" />
-          False share of tracked records
+          {zeroPointLabel} share of tracked records
         </span>
       </div>
       <svg
@@ -68,11 +74,12 @@ export function YearlyTrendChart({ trends }: { trends: YearlyTrend[] }) {
         onPointerLeave={() => setActiveIndex(null)}
       >
         <title id="annual-trend-title">
-          Annual Trust Score and False share by statement year
+          Annual Trust Score and {zeroPointLabel} share by statement year
         </title>
         <desc id="annual-trend-description">
-          Two percentage lines from 2006 through 2026. Point details and sample
-          sizes are available by hovering, with a complete data table below.
+          Two percentage lines from {trends.at(0)?.year ?? "the first year"} through{" "}
+          {trends.at(-1)?.year ?? "the last year"}. Point details and sample sizes
+          are available by hovering, with a complete data table below.
         </desc>
 
         {[0, 25, 50, 75, 100].map((tick) => (
@@ -160,8 +167,9 @@ export function YearlyTrendChart({ trends }: { trends: YearlyTrend[] }) {
               className="trend-chart__point trend-chart__point--false"
             />
             <title>
-              {trend.year}: Trust Score {formatValue(trend.score)}; False share{" "}
-              {trend.falseShare.toFixed(1)}%; {trend.falseCount} False of{" "}
+              {trend.year}: Trust Score {formatValue(trend.score)}; {zeroPointLabel}{" "}
+              share {trend.falseShare.toFixed(1)}%; {trend.falseCount}{" "}
+              {zeroPointLabel} of{" "}
               {trend.total} tracked records.
             </title>
           </g>
@@ -173,12 +181,12 @@ export function YearlyTrendChart({ trends }: { trends: YearlyTrend[] }) {
           <>
             <strong>{active.year}</strong>: Trust Score{" "}
             {formatValue(active.score)} from {active.scored} scored claims;{" "}
-            {active.falseCount} of {active.total} tracked records were False (
-            {active.falseShare.toFixed(1)}%).
+            {active.falseCount} of {active.total} tracked records were{" "}
+            {zeroPointLabel} ({active.falseShare.toFixed(1)}%).
           </>
         ) : (
           <>
-            Hover or tap a year for its exact score, False count, and sample
+            Hover or tap a year for its exact score, {zeroPointLabel} count, and sample
             size.
           </>
         )}
@@ -194,8 +202,8 @@ export function YearlyTrendChart({ trends }: { trends: YearlyTrend[] }) {
                 <th>Tracked</th>
                 <th>Scored</th>
                 <th>Trust Score</th>
-                <th>False</th>
-                <th>False share</th>
+                <th>{zeroPointLabel}</th>
+                <th>{zeroPointLabel} share</th>
               </tr>
             </thead>
             <tbody>

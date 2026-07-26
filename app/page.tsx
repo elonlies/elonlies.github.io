@@ -3,8 +3,9 @@ import Link from "next/link";
 import { ScoreHero } from "@/components/ScoreHero";
 import {
   claimScore,
+  datasetDownloads,
   datasetStats,
-  findClaim,
+  featuredClaims,
   formatDate,
   supportMetrics,
   verdictTone,
@@ -12,15 +13,10 @@ import {
 
 export const metadata: Metadata = {
   title: "A sourced record of Elon Musk’s public claims",
-  description:
-    "A provisional 36% Trust Score built from 100 citation-backed public claims, promises, forecasts, and outcomes.",
+  description: `A provisional ${datasetStats.roundedScore}% Trust Score built from ${datasetStats.totalRecords} citation-backed public claims, promises, forecasts, and outcomes.`,
 };
 
 export default function Home() {
-  const featuredClaims = ["TESLA-006", "SPACEX-004", "X-002"]
-    .map(findClaim)
-    .filter((claim) => claim !== undefined);
-
   return (
     <main id="main-content">
       <section className="home-hero page-shell">
@@ -113,8 +109,8 @@ export default function Home() {
               <h2>The score preserves the difference.</h2>
             </div>
             <p>
-              On-time delivery, late delivery, and a reversed promise are not
-              flattened into a simplistic true-or-false tally.
+              Full credit, partial credit, and zero credit are not flattened into
+              a simplistic true-or-false tally.
             </p>
           </div>
           <div className="featured-claims">
@@ -145,7 +141,8 @@ export default function Home() {
           </div>
           <div className="section-link-row section-link-row--light">
             <Link className="text-link" href="/score#evidence">
-              Browse all 100 records <span aria-hidden="true">→</span>
+              Browse all {datasetStats.totalRecords} records{" "}
+              <span aria-hidden="true">→</span>
             </Link>
           </div>
         </div>
@@ -192,47 +189,23 @@ export default function Home() {
             <p className="eyebrow">Use the underlying research</p>
             <h2>Download the complete dataset.</h2>
             <p>
-              One hundred stable records, 39 v2 fields, statement citations,
-              outcome citations, scoring decisions, confidence, and the complete
-              v1-to-v2 migration trail.
+              {datasetStats.totalRecords} stable records, {datasetStats.fieldCount}{" "}
+              fields, {datasetStats.citationCount} citation placements across{" "}
+              {datasetStats.uniqueSourceCount} distinct source URLs, and the complete{" "}
+              {datasetStats.migrationLabel.toLowerCase()} trail.
             </p>
           </div>
           <div className="download-links">
-            <a
-              className="button"
-              href="/downloads/elon_musk_claims_verified_v2.csv"
-              download
-            >
-              Row-level CSV
-            </a>
-            <a
-              className="button button--secondary"
-              href="/downloads/elon_musk_claims_summary_v2.csv"
-              download
-            >
-              Summary CSV
-            </a>
-            <a
-              className="button button--secondary"
-              href="/downloads/elon_musk_claims_methodology_v2.md"
-              download
-            >
-              Methodology
-            </a>
-            <a
-              className="button button--secondary"
-              href="/downloads/elon_musk_claims_classification_key_v2.csv"
-              download
-            >
-              Classification key
-            </a>
-            <a
-              className="button button--secondary"
-              href="/downloads/elon_musk_claims_migration_v1_to_v2.csv"
-              download
-            >
-              v1 → v2 migration
-            </a>
+            {datasetDownloads.map((download, index) => (
+              <a
+                className={index === 0 ? "button" : "button button--secondary"}
+                href={download.href}
+                download
+                key={download.role}
+              >
+                {download.label}
+              </a>
+            ))}
           </div>
         </div>
       </section>

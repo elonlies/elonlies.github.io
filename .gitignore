@@ -17,6 +17,10 @@
 /.next/
 /out/
 
+# generated from the authoritative package in data/
+/generated-data/
+/public/downloads/
+
 # generated output from the previous vinext/Cloudflare setup
 /.vinext/
 /.wrangler/
