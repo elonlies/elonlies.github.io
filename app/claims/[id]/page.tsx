@@ -74,6 +74,8 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
   if (!claim) notFound();
 
   const score = claimScore(claim);
+  const scorePercentage =
+    score === null ? null : (score / datasetStats.maxScorePoints) * 100;
   const sources = claimSources(claim);
   const migrationRow = findMigration(claim.record_id);
   const claimIndex = claims.findIndex((item) => item.record_id === claim.record_id);
@@ -92,8 +94,12 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
             <div className="claim-detail__meta">
               <span className="record-id">{claim.record_id}</span>
               <span>{formatDate(claim.statement_date)}</span>
-              <span>{claim.organization_or_domain}</span>
               <span>{claim.primary_domain}</span>
+              {claim.public_discourse_category ? (
+                <span>{claim.public_discourse_category}</span>
+              ) : null}
+              {claim.related_entity ? <span>{claim.related_entity}</span> : null}
+              <span>{claim.claim_type}</span>
             </div>
             <h1>{claim.statement_paraphrase}</h1>
             <div className="claim-detail__verdict-row">
@@ -103,10 +109,17 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
               >
                 {claim.display_verdict}
               </span>
-              <span className="claim-detail__score">
-                {score === null
+              <span
+                className="claim-detail__score"
+                title={
+                  score === null
+                    ? undefined
+                    : `Exact score: ${score.toFixed(0)} / ${datasetStats.maxScorePoints} points`
+                }
+              >
+                {scorePercentage === null
                   ? "Excluded from score"
-                  : `${score.toFixed(0)} / ${datasetStats.maxScorePoints} points`}
+                  : `${scorePercentage.toFixed(0)}%`}
               </span>
               <span>{claim.confidence} confidence</span>
               {claim.credible_sources_contest_claim === "Yes" ? (
@@ -173,6 +186,16 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
               <p className="eyebrow">Record details</p>
               <h2 id="record-details-title">How this row was evaluated.</h2>
               <dl className="detail-list">
+                <div>
+                  <dt>Subject category</dt>
+                  <dd>{claim.primary_domain}</dd>
+                </div>
+                {claim.public_discourse_category ? (
+                  <div>
+                    <dt>Public discourse topic</dt>
+                    <dd>{claim.public_discourse_category}</dd>
+                  </div>
+                ) : null}
                 {claim.related_entity ? (
                   <div>
                     <dt>Related entity</dt>
@@ -183,12 +206,6 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                   <div>
                     <dt>Relationship to entity</dt>
                     <dd>{claim.relationship_to_entity}</dd>
-                  </div>
-                ) : null}
-                {claim.public_discourse_category ? (
-                  <div>
-                    <dt>Public discourse category</dt>
-                    <dd>{claim.public_discourse_category}</dd>
                   </div>
                 ) : null}
                 {claim.assertion_mode ? (

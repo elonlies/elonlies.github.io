@@ -73,13 +73,29 @@ const requiredSummaryHeaders = [
   "interpretation_and_caveat",
 ];
 
-const summaryGroupFields = {
-  "By primary domain": "primary_domain",
-  "By organization": "organization_or_domain",
-  "By claim type": "claim_type",
-  "By relationship to entity": "relationship_to_entity",
-  "Public discourse category": "public_discourse_category",
-};
+const summaryGroupDefinitions = [
+  {
+    sections: ["By subject category", "By primary domain"],
+    field: "primary_domain",
+  },
+  {
+    sections: ["By organization"],
+    field: "organization_or_domain",
+  },
+  {
+    sections: ["By organization or entity", "By related entity"],
+    field: "related_entity",
+  },
+  { sections: ["By claim type"], field: "claim_type" },
+  {
+    sections: ["By relationship to entity"],
+    field: "relationship_to_entity",
+  },
+  {
+    sections: ["Public discourse topic", "Public discourse category"],
+    field: "public_discourse_category",
+  },
+];
 
 function fail(message) {
   throw new Error(`Dataset validation failed: ${message}`);
@@ -357,11 +373,23 @@ function validateSummary({
     );
   }
 
-  for (const [section, field] of Object.entries(summaryGroupFields)) {
+  for (const { sections, field } of summaryGroupDefinitions) {
+    const publishedSections = sections.filter((sectionName) =>
+      summary.some(
+        (row) =>
+          row.section === sectionName && row.metric === "Trust Score",
+      ),
+    );
+    if (publishedSections.length > 1) {
+      fail(
+        `summary publishes multiple aliases for the same grouping: ${publishedSections.join(", ")}.`,
+      );
+    }
+    const [section] = publishedSections;
+    if (!section) continue;
     const sectionRows = summary.filter(
       (row) => row.section === section && row.metric === "Trust Score",
     );
-    if (sectionRows.length === 0) continue;
     const expectedGroups = new Set(
       claims.map((claim) => claim[field]).filter(Boolean),
     );
@@ -371,6 +399,14 @@ function validateSummary({
     );
     if (missingGroups.length > 0) {
       fail(`${section} summary is missing groups: ${missingGroups.join(", ")}.`);
+    }
+    const unexpectedGroups = [...publishedGroups].filter(
+      (group) => !expectedGroups.has(group),
+    );
+    if (unexpectedGroups.length > 0) {
+      fail(
+        `${section} summary has groups absent from claims.csv: ${unexpectedGroups.join(", ")}.`,
+      );
     }
 
     for (const row of sectionRows) {
@@ -618,10 +654,34 @@ export async function buildDataset({
       "outcome_summary",
       "confidence",
     ];
+    const taxonomyFields = [
+      "organization_or_domain",
+      "primary_domain",
+      "claim_type",
+      "related_entity",
+      "relationship_to_entity",
+      "public_discourse_category",
+    ];
 
     if (!rule) problems.push(`unknown verdict "${claim.verdict_category}"`);
     for (const field of requiredValues) {
-      if (claim[field] === "") problems.push(`missing ${field}`);
+      if (claim[field].trim() === "") problems.push(`missing ${field}`);
+    }
+    for (const field of taxonomyFields) {
+      if (
+        claim[field] !== undefined &&
+        claim[field] !== claim[field].trim()
+      ) {
+        problems.push(`${field} cannot begin or end with whitespace`);
+      }
+    }
+    if (
+      claim.public_discourse_category?.trim() &&
+      claim.organization_or_domain !== "Public discourse"
+    ) {
+      problems.push(
+        "public_discourse_category is only valid for Public discourse records",
+      );
     }
     if (!/^\d{4}(?:-\d{2}(?:-\d{2})?)?$/.test(claim.statement_date)) {
       problems.push(`invalid statement_date "${claim.statement_date}"`);
@@ -804,6 +864,20 @@ export async function buildDataset({
       ).length,
       citationCount: citationUrls.length,
       uniqueSourceCount: new Set(citationUrls).size,
+      subjectCategoryCount: new Set(
+        claims.map((claim) => claim.primary_domain).filter(Boolean),
+      ).size,
+      relatedEntityCount: new Set(
+        claims.map((claim) => claim.related_entity).filter(Boolean),
+      ).size,
+      publicDiscourseTopicClaimCount: claims.filter(
+        (claim) => claim.public_discourse_category,
+      ).length,
+      publicDiscourseCategoryCount: new Set(
+        claims
+          .map((claim) => claim.public_discourse_category)
+          .filter(Boolean),
+      ).size,
       sourceFiles,
       downloads,
     },

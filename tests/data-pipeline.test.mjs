@@ -1,6 +1,16 @@
 import assert from "node:assert/strict";
+import {
+  cp,
+  mkdtemp,
+  readFile,
+  rm,
+  writeFile,
+} from "node:fs/promises";
+import { tmpdir } from "node:os";
+import path from "node:path";
 import test from "node:test";
 import {
+  buildDataset,
   datasetFileNames,
   discoverDatasetPackage,
   formatVersionLabel,
@@ -70,5 +80,63 @@ test("CSV parsing is BOM-aware, quote-aware, and shape-validating", () => {
   assert.throws(
     () => parseCsv('id,note\nA-1,"unfinished\n', "bad.csv"),
     /ends inside a quoted field/i,
+  );
+});
+
+test("rejects invalid taxonomy values and contradictory summary aliases", async (t) => {
+  const temporaryRoot = await mkdtemp(
+    path.join(tmpdir(), "elonlies-taxonomy-"),
+  );
+  const dataDir = path.join(temporaryRoot, "data");
+  await cp(new URL("../data/", import.meta.url), dataDir, {
+    recursive: true,
+  });
+  t.after(() => rm(temporaryRoot, { recursive: true, force: true }));
+
+  const claimsPath = path.join(dataDir, datasetFileNames.claims);
+  const summaryPath = path.join(dataDir, datasetFileNames.summary);
+  const claimsSource = await readFile(claimsPath, "utf8");
+  const firstClaimCategory =
+    "Business & Technology,,Master plan,Promise or Commitment";
+  assert.ok(claimsSource.includes(firstClaimCategory));
+
+  await writeFile(
+    claimsPath,
+    claimsSource.replace(
+      firstClaimCategory,
+      "Business & Technology,Politics & Elections,Master plan,Promise or Commitment",
+    ),
+  );
+  await assert.rejects(
+    buildDataset({ dataDir, writeOutputs: false }),
+    /public_discourse_category is only valid for Public discourse records/i,
+  );
+
+  await writeFile(
+    claimsPath,
+    claimsSource.replace(
+      firstClaimCategory,
+      "   ,,Master plan,Promise or Commitment",
+    ),
+  );
+  await assert.rejects(
+    buildDataset({ dataDir, writeOutputs: false }),
+    /missing primary_domain/i,
+  );
+
+  await writeFile(claimsPath, claimsSource);
+  const summarySource = await readFile(summaryPath, "utf8");
+  const duplicateAliasRows = summarySource
+    .split(/\r?\n/)
+    .filter((row) => row.startsWith("By primary domain,Trust Score,"))
+    .map((row) => row.replace("By primary domain", "By subject category"));
+  assert.ok(duplicateAliasRows.length > 0);
+  await writeFile(
+    summaryPath,
+    `${summarySource.trimEnd()}\n${duplicateAliasRows.join("\n")}\n`,
+  );
+  await assert.rejects(
+    buildDataset({ dataDir, writeOutputs: false }),
+    /multiple aliases for the same grouping/i,
   );
 });

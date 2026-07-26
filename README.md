@@ -11,7 +11,8 @@ at build time.
 ## What is included
 
 - A percentage Trust Score with its exact points fraction on hover
-- Full score calculation plus domain and organization breakdowns
+- Full score calculation plus subject-category breakdowns and an optional
+  organization/entity facet
 - Outcome distribution and annual trend visualizations
 - Raw yearly zero-point counts with sample-size details
 - Interactive alternative-weight calculator
@@ -69,6 +70,19 @@ categories and weights, and the migration CSV must cover every current record
 ID exactly once. Generated JSON lives in ignored `generated-data/`; synchronized
 visitor downloads live in ignored `public/downloads/`. Git history is the
 archive for older packages.
+
+The visitor-facing taxonomy has four distinct fields:
+
+- `primary_domain` is the universal subject category. Every record has one, and
+  it drives the site’s primary category filters, comparisons, and breakdowns.
+- `public_discourse_category` is an optional subcategory used only when a
+  public-discourse record needs a more specific label. It does not replace
+  `primary_domain`.
+- `related_entity` is an independent organization/entity context facet. It can
+  help visitors narrow the evidence without changing a record’s subject
+  category.
+- `organization_or_domain` remains in the source package for legacy and audit
+  compatibility. It is not the visitor-facing subject taxonomy.
 
 Run the importer directly when working on data:
 

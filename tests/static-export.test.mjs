@@ -62,6 +62,13 @@ test("exports a data-derived homepage instead of a rendered README", async () =>
   );
   assert.match(
     html,
+    new RegExp(
+      `${meta.subjectCategoryCount}</strong><span>subject categories`,
+      "i",
+    ),
+  );
+  assert.match(
+    html,
     new RegExp(`${meta.citationCount}[^<]*citation placements`, "i"),
   );
   assert.match(html, new RegExp(escapeRegExp(meta.migrationLabel), "i"));
@@ -69,24 +76,35 @@ test("exports a data-derived homepage instead of a rendered README", async () =>
 });
 
 test("exports all data-driven pages and every stable claim route", async () => {
-  const firstClaim = claims[0];
-  const categorizedClaim = claims.find(
+  const subjectClaim = claims.find((claim) => claim.primary_domain);
+  const publicDiscourseClaim = claims.find(
     (claim) => claim.public_discourse_category,
   );
-  assert.ok(categorizedClaim, "expected a categorized claim in the current data");
+  const relatedEntityClaim = claims.find((claim) => claim.related_entity);
+  assert.ok(subjectClaim, "expected a subject category in the current data");
+  assert.ok(
+    publicDiscourseClaim,
+    "expected a public discourse topic in the current data",
+  );
+  assert.ok(
+    relatedEntityClaim,
+    "expected a related entity in the current data",
+  );
   const [
     scoreHtml,
     visualizationsHtml,
     methodologyHtml,
     claimHtml,
-    categorizedClaimHtml,
+    publicDiscourseClaimHtml,
+    relatedEntityClaimHtml,
     claimDirectories,
   ] = await Promise.all([
     readOutput("score/index.html"),
     readOutput("visualizations/index.html"),
     readOutput("methodology/index.html"),
-    readOutput(`claims/${firstClaim.record_id}/index.html`),
-    readOutput(`claims/${categorizedClaim.record_id}/index.html`),
+    readOutput(`claims/${subjectClaim.record_id}/index.html`),
+    readOutput(`claims/${publicDiscourseClaim.record_id}/index.html`),
+    readOutput(`claims/${relatedEntityClaim.record_id}/index.html`),
     readdir(new URL("claims/", outputRoot), { withFileTypes: true }),
   ]).then((values) =>
     values.map((value) =>
@@ -103,8 +121,15 @@ test("exports all data-driven pages and every stable claim route", async () => {
     new RegExp(meta.pointsEarned.toLocaleString("en-US")),
   );
   assert.match(scoreHtml, /Recalculate the score yourself/i);
+  assert.match(scoreHtml, /Score by subject category/i);
+  assert.match(scoreHtml, /Public discourse topic/i);
+  assert.match(scoreHtml, /Organization or entity/i);
+  assert.doesNotMatch(scoreHtml, /Score by organization/i);
   assert.match(visualizationsHtml, /See the pattern, not just the headline/i);
   assert.match(visualizationsHtml, /Annual Trust Score/i);
+  assert.match(visualizationsHtml, /Score by subject category/i);
+  assert.match(visualizationsHtml, /Score by claim type/i);
+  assert.doesNotMatch(visualizationsHtml, /Score by organization/i);
   assert.match(
     visualizationsHtml,
     new RegExp(escapeRegExp(meta.versionLabel), "i"),
@@ -120,7 +145,7 @@ test("exports all data-driven pages and every stable claim route", async () => {
   );
   assert.match(
     claimHtml,
-    new RegExp(escapeRegExp(firstClaim.statement_paraphrase)),
+    new RegExp(escapeRegExp(subjectClaim.statement_paraphrase)),
   );
   assert.match(
     claimHtml,
@@ -130,14 +155,30 @@ test("exports all data-driven pages and every stable claim route", async () => {
     claimHtml,
     new RegExp(`${escapeRegExp(meta.migrationLabel)} audit`, "i"),
   );
-  assert.match(categorizedClaimHtml, /Public discourse category/i);
+  assert.match(claimHtml, /Subject category/i);
   assert.match(
-    categorizedClaimHtml,
+    claimHtml,
     new RegExp(
-      escapeRegExp(encodeHtmlText(categorizedClaim.public_discourse_category)),
+      escapeRegExp(encodeHtmlText(subjectClaim.primary_domain)),
     ),
   );
-  assert.match(categorizedClaimHtml, /Assertion mode/i);
+  assert.match(publicDiscourseClaimHtml, /Public discourse topic/i);
+  assert.match(
+    publicDiscourseClaimHtml,
+    new RegExp(
+      escapeRegExp(
+        encodeHtmlText(publicDiscourseClaim.public_discourse_category),
+      ),
+    ),
+  );
+  assert.match(relatedEntityClaimHtml, /Related entity/i);
+  assert.match(
+    relatedEntityClaimHtml,
+    new RegExp(
+      escapeRegExp(encodeHtmlText(relatedEntityClaim.related_entity)),
+    ),
+  );
+  assert.match(publicDiscourseClaimHtml, /Assertion mode/i);
   assert.equal(
     claimDirectories.filter((entry) => entry.isDirectory()).length,
     meta.totalRecords,
@@ -234,6 +275,56 @@ test("generated data reconciles score, categories, citations, and migration", ()
   );
   assert.equal(citations.length, meta.citationCount);
   assert.equal(new Set(citations).size, meta.uniqueSourceCount);
+
+  const subjectCategories = new Set(
+    claims.map((claim) => claim.primary_domain).filter(Boolean),
+  );
+  assert.ok(
+    claims.every((claim) => Boolean(claim.primary_domain?.trim())),
+    "every claim needs a universal subject category",
+  );
+  const relatedEntities = new Set(
+    claims.map((claim) => claim.related_entity).filter(Boolean),
+  );
+  const publicDiscourseClaims = claims.filter(
+    (claim) => claim.public_discourse_category,
+  );
+  assert.ok(
+    publicDiscourseClaims.every(
+      (claim) => claim.organization_or_domain === "Public discourse",
+    ),
+    "public-discourse topics must stay scoped to Public discourse records",
+  );
+  const publicDiscourseCategories = new Set(
+    publicDiscourseClaims.map(
+      (claim) => claim.public_discourse_category,
+    ),
+  );
+  assert.equal(meta.subjectCategoryCount, subjectCategories.size);
+  assert.equal(meta.relatedEntityCount, relatedEntities.size);
+  assert.equal(
+    meta.publicDiscourseTopicClaimCount,
+    publicDiscourseClaims.length,
+  );
+  assert.equal(
+    meta.publicDiscourseCategoryCount,
+    publicDiscourseCategories.size,
+  );
+  const subjectSummaryRows = summary.filter(
+    (row) =>
+      ["By subject category", "By primary domain"].includes(row.section) &&
+      row.metric === "Trust Score",
+  );
+  assert.equal(
+    new Set(subjectSummaryRows.map((row) => row.section)).size,
+    1,
+    "publish exactly one subject-category summary section alias",
+  );
+  assert.equal(subjectSummaryRows.length, subjectCategories.size);
+  assert.deepEqual(
+    new Set(subjectSummaryRows.map((row) => row.group)),
+    subjectCategories,
+  );
 
   const overall = summary.find(
     (row) =>

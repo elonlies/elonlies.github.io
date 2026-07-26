@@ -5,11 +5,13 @@ import {
   classificationKey,
   datasetDownloads,
   datasetStats,
-  domainScores,
   formatDate,
   migrationChanges,
-  organizationNames,
+  publicDiscourseCategoryNames,
   ratingBands,
+  relatedEntityNames,
+  subjectCategoryNames,
+  subjectCategoryScores,
   verdictTone,
 } from "@/lib/data";
 
@@ -24,10 +26,14 @@ const scoredRules = classificationKey.filter(
 const excludedRules = classificationKey.filter(
   (rule) => rule.included_in_score === "No",
 );
-const organizationList = new Intl.ListFormat("en-US", {
+const listFormatter = new Intl.ListFormat("en-US", {
   style: "long",
   type: "conjunction",
-}).format(organizationNames);
+});
+const subjectCategoryList = listFormatter.format(subjectCategoryNames);
+const publicDiscourseCategoryList = listFormatter.format(
+  publicDiscourseCategoryNames,
+);
 
 export default function MethodologyPage() {
   return (
@@ -61,13 +67,25 @@ export default function MethodologyPage() {
             <p>
               The corpus contains {datasetStats.totalRecords} concrete Elon Musk
               statements, commitments, forecasts, promises, and factual assertions
-              spanning {organizationList}.
+              spanning {subjectCategoryList}. Company affiliation is not required:
+              the same subject-first taxonomy covers organizational claims, public
+              affairs, and statements about science, media, legal matters, or Musk
+              personally.
             </p>
             <p>
               It is not literally every sentence Musk has spoken or posted. That
               universe is unbounded and includes deleted material, private remarks,
               jokes, opinions, and claims with no testable meaning. The corpus
               deliberately favors consequential, concrete, verifiable claims.
+              {datasetStats.publicDiscourseTopicClaimCount > 0 ? (
+                <>
+                  {" "}
+                  The optional public-discourse topic is populated on{" "}
+                  {datasetStats.publicDiscourseTopicClaimCount} records across{" "}
+                  {datasetStats.publicDiscourseCategoryCount} more specific topics:{" "}
+                  {publicDiscourseCategoryList}.
+                </>
+              ) : null}
             </p>
             <div className="callout callout--warning">
               <strong>The central limitation is selection bias.</strong>
@@ -235,7 +253,32 @@ export default function MethodologyPage() {
           <div className="method-section__number">06</div>
           <div>
             <p className="eyebrow">Structure</p>
-            <h2>Claim types and primary domains stay separate.</h2>
+            <h2>Subject categories are primary; entities remain separate.</h2>
+            <ol className="source-hierarchy">
+              {subjectCategoryScores.map((category) => (
+                <li key={category.name}>
+                  <strong>{category.name}.</strong>
+                  <span>
+                    {category.totalRecords} tracked record
+                    {category.totalRecords === 1 ? "" : "s"}; {category.count}{" "}
+                    included in the score.
+                  </span>
+                </li>
+              ))}
+            </ol>
+            <p>
+              Every row has one of these {subjectCategoryNames.length} subject
+              categories in <code>primary_domain</code>. The{" "}
+              <code>related_entity</code> field is an independent context facet,
+              currently containing {relatedEntityNames.length} distinct entities;
+              it does not determine what the claim is about. The optional{" "}
+              <code>public_discourse_category</code> field adds a narrower public
+              topic only where it applies.
+            </p>
+            <p>
+              Claim type describes the statement&apos;s form, not its subject. The
+              current statement forms are:
+            </p>
             <ol className="source-hierarchy">
               {claimTypeScores.map((type) => (
                 <li key={type.name}>
@@ -248,14 +291,12 @@ export default function MethodologyPage() {
                 </li>
               ))}
             </ol>
-            <p>
-              The current CSV supplies {domainScores.length} primary domains:{" "}
-              {new Intl.ListFormat("en-US", {
-                style: "long",
-                type: "conjunction",
-              }).format(domainScores.map((domain) => domain.name))}
-              . These names and their counts update automatically when the row-level
-              data changes.
+            <p className="fine-print">
+              All names and counts above come from the row-level CSV and update
+              automatically when the data package changes. The legacy{" "}
+              <code>organization_or_domain</code> field remains in the downloadable
+              package for migration and summary-audit compatibility, not as the
+              visitor-facing category system.
             </p>
           </div>
         </section>

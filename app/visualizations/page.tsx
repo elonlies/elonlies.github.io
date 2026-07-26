@@ -6,7 +6,9 @@ import {
   datasetStats,
   formatVerdict,
   outcomeDistribution,
+  subjectCategoryScores,
   trendComparison,
+  type ScoreBreakdown,
   verdictColors,
   yearlyTrends,
   zeroPointVerdictLabel,
@@ -14,7 +16,7 @@ import {
 
 export const metadata: Metadata = {
   title: "Visualize the record",
-  description: `Explore annual Trust Score trends, zero-point record counts, verdict composition, and claim-type comparisons across the ${datasetStats.versionLabel} corpus.`,
+  description: `Explore annual Trust Score trends, zero-point record counts, verdict composition, subject-category comparisons, and claim types across the ${datasetStats.versionLabel} corpus.`,
 };
 
 let verdictCursor = 0;
@@ -38,6 +40,37 @@ function formatPeriodScore(score: number | null) {
   return score === null ? "Not scored" : `${score.toFixed(1)}%`;
 }
 
+function ScoreBarList({ groups }: { groups: ScoreBreakdown[] }) {
+  return (
+    <div className="score-bar-list">
+      {groups.map((group) => (
+        <div className="score-bar-row" key={group.name}>
+          <div>
+            <strong>{group.name}</strong>
+            <span>
+              {group.count} scored of {group.totalRecords}
+            </span>
+          </div>
+          <div
+            className="score-bar-row__rail"
+            role="img"
+            aria-label={
+              group.score === null
+                ? `${group.name}: not scored`
+                : `${group.name}: ${group.score.toFixed(1)} percent`
+            }
+          >
+            <span style={{ width: `${group.score ?? 0}%` }} />
+          </div>
+          <strong>
+            {group.score === null ? "Not scored" : `${group.score.toFixed(1)}%`}
+          </strong>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 export default function VisualizationsPage() {
   return (
     <main id="main-content">
@@ -52,9 +85,9 @@ export default function VisualizationsPage() {
             </p>
             <h1>See the pattern, not just the headline.</h1>
             <p className="lede">
-              Annual trends, raw counts, verdict composition, and claim-type
-              comparisons show what changed—and how much the sample size shapes
-              what appears to change.
+              Annual trends, raw counts, verdict composition, subject categories,
+              and claim types show what changed—and how much the sample size
+              shapes what appears to change.
             </p>
           </div>
         </div>
@@ -169,12 +202,13 @@ export default function VisualizationsPage() {
       <section className="section page-shell section--ruled">
         <div className="section-heading">
           <div>
-            <p className="eyebrow">Two more ways to read the corpus</p>
-            <h2>Composition and claim type.</h2>
+            <p className="eyebrow">Three more ways to read the corpus</p>
+            <h2>Verdict mix, subject category, and claim type.</h2>
           </div>
           <p>
-            One view shows the whole verdict mix; the other compares the score
-            earned by different kinds of statements.
+            The verdict mix shows the whole corpus. Subject and statement-form
+            views compare independent facets without assuming every claim belongs
+            to one of Musk&apos;s organizations.
           </p>
         </div>
 
@@ -213,45 +247,26 @@ export default function VisualizationsPage() {
             </div>
           </section>
 
-          <section aria-labelledby="claim-type-title">
+          <section aria-labelledby="subject-category-title">
             <div className="subsection-heading">
               <p className="eyebrow">Shared-scale comparison</p>
-              <h2 id="claim-type-title">Score by claim type.</h2>
+              <h2 id="subject-category-title">Score by subject category.</h2>
             </div>
-            <div className="type-score-list">
-              {claimTypeScores.map((group) => (
-                <div className="type-score-row" key={group.name}>
-                  <div>
-                    <strong>{group.name}</strong>
-                    <span>
-                      {group.count} scored of {group.totalRecords}
-                    </span>
-                  </div>
-                  <div
-                    className="type-score-row__rail"
-                    role="img"
-                    aria-label={
-                      group.score === null
-                        ? `${group.name}: not scored`
-                        : `${group.name}: ${group.score.toFixed(1)} percent`
-                    }
-                  >
-                    <span
-                      style={{
-                        width: `${group.score ?? 0}%`,
-                      }}
-                    />
-                  </div>
-                  <strong>
-                    {group.score === null
-                      ? "Not scored"
-                      : `${group.score.toFixed(1)}%`}
-                  </strong>
-                </div>
-              ))}
-            </div>
+            <ScoreBarList groups={subjectCategoryScores} />
           </section>
         </div>
+
+        <section className="claim-type-panel" aria-labelledby="claim-type-title">
+          <div className="subsection-heading">
+            <p className="eyebrow">Statement form</p>
+            <h2 id="claim-type-title">Score by claim type.</h2>
+            <p>
+              Claim type describes how the statement was framed, independently of
+              what it was about or which entity it concerned.
+            </p>
+          </div>
+          <ScoreBarList groups={claimTypeScores} />
+        </section>
       </section>
 
       <section className="section section--download">

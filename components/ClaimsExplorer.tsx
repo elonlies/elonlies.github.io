@@ -5,6 +5,7 @@ import { useEffect, useMemo, useRef, useState } from "react";
 import {
   claimScore,
   claimTypeGroup,
+  datasetStats,
   formatDate,
   formatVerdict,
   type Claim,
@@ -26,17 +27,35 @@ const sortOptions = [
   { value: "newest", label: "Newest first" },
   { value: "score-low", label: "Score: low to high" },
   { value: "score-high", label: "Score: high to low" },
-  { value: "organization", label: "Organization" },
+  { value: "category", label: "Subject category" },
 ];
 
 export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
-  const organizations = useMemo(
+  const subjectCategories = useMemo(
     () =>
-      [...new Set(claims.map((claim) => claim.organization_or_domain))].sort(),
+      [...new Set(claims.map((claim) => claim.primary_domain))].sort(),
     [claims],
   );
-  const domains = useMemo(
-    () => [...new Set(claims.map((claim) => claim.primary_domain))].sort(),
+  const relatedEntities = useMemo(
+    () =>
+      [
+        ...new Set(
+          claims
+            .map((claim) => claim.related_entity)
+            .filter((entity): entity is string => Boolean(entity)),
+        ),
+      ].sort(),
+    [claims],
+  );
+  const publicDiscourseCategories = useMemo(
+    () =>
+      [
+        ...new Set(
+          claims
+            .map((claim) => claim.public_discourse_category)
+            .filter((category): category is string => Boolean(category)),
+        ),
+      ].sort(),
     [claims],
   );
   const verdicts = useMemo(
@@ -49,8 +68,10 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
   );
 
   const [search, setSearch] = useState("");
-  const [organization, setOrganization] = useState("all");
-  const [domain, setDomain] = useState("all");
+  const [category, setCategory] = useState("all");
+  const [entity, setEntity] = useState("all");
+  const [discourse, setDiscourse] = useState("all");
+  const [legacyContext, setLegacyContext] = useState<string | null>(null);
   const [verdict, setVerdict] = useState("all");
   const [type, setType] = useState("all");
   const [scope, setScope] = useState("all");
@@ -61,8 +82,12 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
     const timeoutId = window.setTimeout(() => {
       const params = new URLSearchParams(window.location.search);
       setSearch(params.get("q") ?? "");
-      setOrganization(params.get("org") ?? "all");
-      setDomain(params.get("domain") ?? "all");
+      setCategory(params.get("category") ?? params.get("domain") ?? "all");
+      setEntity(params.get("entity") ?? "all");
+      setLegacyContext(
+        params.get("legacy_context") ?? params.get("org"),
+      );
+      setDiscourse(params.get("discourse") ?? "all");
       setVerdict(params.get("verdict") ?? "all");
       setType(params.get("type") ?? "all");
       setScope(params.get("scope") ?? "all");
@@ -77,8 +102,10 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
     if (!queryReady.current) return;
     const params = new URLSearchParams();
     if (search) params.set("q", search);
-    if (organization !== "all") params.set("org", organization);
-    if (domain !== "all") params.set("domain", domain);
+    if (category !== "all") params.set("category", category);
+    if (entity !== "all") params.set("entity", entity);
+    if (discourse !== "all") params.set("discourse", discourse);
+    if (legacyContext) params.set("legacy_context", legacyContext);
     if (verdict !== "all") params.set("verdict", verdict);
     if (type !== "all") params.set("type", type);
     if (scope !== "all") params.set("scope", scope);
@@ -89,7 +116,17 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
       "",
       `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`,
     );
-  }, [domain, organization, scope, search, sort, type, verdict]);
+  }, [
+    category,
+    discourse,
+    entity,
+    legacyContext,
+    scope,
+    search,
+    sort,
+    type,
+    verdict,
+  ]);
 
   const filteredClaims = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -114,12 +151,19 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
 
       if (query && !searchable.includes(query)) return false;
       if (
-        organization !== "all" &&
-        claim.organization_or_domain !== organization
+        legacyContext &&
+        claim.organization_or_domain !== legacyContext
       ) {
         return false;
       }
-      if (domain !== "all" && claim.primary_domain !== domain) return false;
+      if (category !== "all" && claim.primary_domain !== category) return false;
+      if (entity !== "all" && claim.related_entity !== entity) return false;
+      if (
+        discourse !== "all" &&
+        claim.public_discourse_category !== discourse
+      ) {
+        return false;
+      }
       if (verdict !== "all" && claim.verdict_category !== verdict) return false;
       if (type !== "all" && claimTypeGroup(claim.claim_type) !== type) {
         return false;
@@ -149,20 +193,38 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
         return (claimScore(b) ?? Number.NEGATIVE_INFINITY) -
           (claimScore(a) ?? Number.NEGATIVE_INFINITY);
       }
-      if (sort === "organization") {
+      if (sort === "category") {
+        const secondaryA =
+          a.public_discourse_category || a.related_entity || a.topic;
+        const secondaryB =
+          b.public_discourse_category || b.related_entity || b.topic;
         return (
-          a.organization_or_domain.localeCompare(b.organization_or_domain) ||
+          a.primary_domain.localeCompare(b.primary_domain) ||
+          secondaryA.localeCompare(secondaryB) ||
           a.statement_date.localeCompare(b.statement_date)
         );
       }
       return a.statement_date.localeCompare(b.statement_date);
     });
-  }, [claims, domain, organization, scope, search, sort, type, verdict]);
+  }, [
+    category,
+    claims,
+    discourse,
+    entity,
+    legacyContext,
+    scope,
+    search,
+    sort,
+    type,
+    verdict,
+  ]);
 
   const clearFilters = () => {
     setSearch("");
-    setOrganization("all");
-    setDomain("all");
+    setCategory("all");
+    setEntity("all");
+    setDiscourse("all");
+    setLegacyContext(null);
     setVerdict("all");
     setType("all");
     setScope("all");
@@ -178,38 +240,56 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
             type="search"
             value={search}
             onChange={(event) => setSearch(event.target.value)}
-            placeholder="Claim, outcome, topic, or record ID"
+            placeholder="Claim, topic, subject, entity, or record ID"
           />
         </label>
         <div className="filter-grid">
           <label>
-            <span>Organization</span>
+            <span>Subject category</span>
             <select
-              value={organization}
-              onChange={(event) => setOrganization(event.target.value)}
+              value={category}
+              onChange={(event) => setCategory(event.target.value)}
             >
-              <option value="all">All organizations</option>
-              {organizations.map((item) => (
+              <option value="all">All subject categories</option>
+              {subjectCategories.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
               ))}
             </select>
           </label>
-          <label>
-            <span>Primary domain</span>
-            <select
-              value={domain}
-              onChange={(event) => setDomain(event.target.value)}
-            >
-              <option value="all">All domains</option>
-              {domains.map((item) => (
-                <option key={item} value={item}>
-                  {item}
-                </option>
-              ))}
-            </select>
-          </label>
+          {publicDiscourseCategories.length > 0 ? (
+            <label>
+              <span>Public discourse topic</span>
+              <select
+                value={discourse}
+                onChange={(event) => setDiscourse(event.target.value)}
+              >
+                <option value="all">All public discourse topics</option>
+                {publicDiscourseCategories.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
+          {relatedEntities.length > 0 ? (
+            <label>
+              <span>Organization or entity</span>
+              <select
+                value={entity}
+                onChange={(event) => setEntity(event.target.value)}
+              >
+                <option value="all">All organizations and entities</option>
+                {relatedEntities.map((item) => (
+                  <option key={item} value={item}>
+                    {item}
+                  </option>
+                ))}
+              </select>
+            </label>
+          ) : null}
           <label>
             <span>Verdict</span>
             <select
@@ -265,22 +345,44 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
         <p aria-live="polite">
           Showing <strong>{filteredClaims.length}</strong> of {claims.length} claims
         </p>
-        <button className="text-button" type="button" onClick={clearFilters}>
-          Clear filters
-        </button>
+        <div className="claims-results-header__actions">
+          {legacyContext ? (
+            <button
+              className="text-button"
+              type="button"
+              onClick={() => setLegacyContext(null)}
+              title="Compatibility filter from an older shared link"
+            >
+              Dataset context: {legacyContext} ×
+            </button>
+          ) : null}
+          <button className="text-button" type="button" onClick={clearFilters}>
+            Clear filters
+          </button>
+        </div>
       </div>
 
       {filteredClaims.length > 0 ? (
         <ol className="claims-list">
           {filteredClaims.map((claim) => {
             const score = claimScore(claim);
+            const scorePercentage =
+              score === null
+                ? null
+                : (score / datasetStats.maxScorePoints) * 100;
             return (
               <li key={claim.record_id}>
                 <article className="claim-row">
                   <div className="claim-row__meta">
                     <span className="record-id">{claim.record_id}</span>
                     <span>{formatDate(claim.statement_date)}</span>
-                    <span>{claim.organization_or_domain}</span>
+                    <span>{claim.primary_domain}</span>
+                    {claim.public_discourse_category ? (
+                      <span>{claim.public_discourse_category}</span>
+                    ) : null}
+                    {claim.related_entity ? (
+                      <span>{claim.related_entity}</span>
+                    ) : null}
                     <span>{claimTypeGroup(claim.claim_type)}</span>
                   </div>
                   <div className="claim-row__body">
@@ -299,8 +401,16 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
                       >
                         {claim.display_verdict}
                       </span>
-                      <strong>
-                        {score === null ? "Excluded" : `${score.toFixed(0)} / 100`}
+                      <strong
+                        title={
+                          score === null
+                            ? undefined
+                            : `Exact score: ${score} / ${datasetStats.maxScorePoints} points`
+                        }
+                      >
+                        {scorePercentage === null
+                          ? "Excluded"
+                          : `${scorePercentage.toFixed(0)}%`}
                       </strong>
                     </div>
                   </div>

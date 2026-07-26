@@ -1,11 +1,8 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClaimsExplorer } from "@/components/ClaimsExplorer";
-import {
-  DomainLedger,
-  OrganizationLedger,
-} from "@/components/OrganizationLedger";
 import { OutcomeLedger } from "@/components/OutcomeLedger";
+import { SubjectCategoryLedger } from "@/components/ScoreBreakdownLedger";
 import { WeightCalculator } from "@/components/WeightCalculator";
 import {
   claims,
@@ -16,7 +13,7 @@ import {
 
 export const metadata: Metadata = {
   title: `Why Elon Musk scores ${datasetStats.roundedScore}%`,
-  description: `The calculation, organization breakdowns, outcome distribution, alternative-weight calculator, and all ${datasetStats.totalRecords} evidence records.`,
+  description: `The calculation, subject-category breakdown, outcome distribution, alternative-weight calculator, and all ${datasetStats.totalRecords} evidence records.`,
 };
 
 export default function ScorePage() {
@@ -122,31 +119,27 @@ export default function ScorePage() {
       </section>
 
       <section className="section page-shell section--ruled">
-        <div className="split-analysis">
-          <div>
-            <div className="subsection-heading">
-              <p className="eyebrow">Score by primary domain</p>
-              <h2>
-                {datasetStats.domainCount} subject areas, disclosed separately.
-              </h2>
-              <p>
-                Weighted score among included records. Every result shows its
-                denominator.
-              </p>
-            </div>
-            <DomainLedger />
-          </div>
-          <div>
-            <div className="subsection-heading">
-              <p className="eyebrow">Score by organization</p>
-              <h2>Different records, different sample sizes.</h2>
-              <p>
-                Organization scores remain sensitive to the claims selected for
-                each group.
-              </p>
-            </div>
-            <OrganizationLedger />
-          </div>
+        <div className="subsection-heading">
+          <p className="eyebrow">Score by subject category</p>
+          <h2>
+            {datasetStats.subjectCategoryCount} subject areas, disclosed
+            separately.
+          </h2>
+          <p>
+            Every record has a subject category, whether the claim concerns a
+            company, public affairs, science, media, or Musk personally. Each
+            result shows its own denominator; a category with no score-bearing
+            records remains visible as not scored.
+          </p>
+        </div>
+        <SubjectCategoryLedger />
+        <div className="callout">
+          <strong>Organizations are context, not the taxonomy.</strong>
+          <p>
+            When an organization or other entity is relevant, it remains available
+            as an independent filter in the evidence index. Public-discourse
+            topics are also tracked separately where they apply.
+          </p>
         </div>
       </section>
 

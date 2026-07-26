@@ -29,7 +29,8 @@ export default function Home() {
           </h1>
           <p className="lede">
             One clear conclusion up front. Every claim, verdict, exclusion, and
-            citation close enough to challenge it.
+            citation close enough to challenge it—organized by subject whether or
+            not a company is involved.
           </p>
         </div>
         <ScoreHero />
@@ -50,15 +51,8 @@ export default function Home() {
             <span>pending or unresolved</span>
           </div>
           <div>
-            <strong>
-              {Math.round(
-                (datasetStats.highConfidenceClaims /
-                  datasetStats.totalRecords) *
-                  100,
-              )}
-              %
-            </strong>
-            <span>high-confidence research</span>
+            <strong>{datasetStats.subjectCategoryCount}</strong>
+            <span>subject categories</span>
           </div>
         </div>
       </section>
@@ -116,6 +110,10 @@ export default function Home() {
           <div className="featured-claims">
             {featuredClaims.map((claim) => {
               const score = claimScore(claim);
+              const scorePercentage =
+                score === null
+                  ? null
+                  : (score / datasetStats.maxScorePoints) * 100;
               return (
                 <article className="featured-claim" key={claim.record_id}>
                   <div className="featured-claim__meta">
@@ -130,7 +128,17 @@ export default function Home() {
                     >
                       {claim.display_verdict}
                     </span>
-                    <span>{score === null ? "Excluded" : `${score.toFixed(0)} points`}</span>
+                    <span
+                      title={
+                        score === null
+                          ? undefined
+                          : `Exact score: ${score} / ${datasetStats.maxScorePoints} points`
+                      }
+                    >
+                      {scorePercentage === null
+                        ? "Excluded"
+                        : `${scorePercentage.toFixed(0)}%`}
+                    </span>
                   </div>
                   <Link href={`/claims/${claim.record_id}`}>
                     Open the evidence <span aria-hidden="true">→</span>

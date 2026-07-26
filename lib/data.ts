@@ -119,6 +119,10 @@ type DatasetMeta = {
   excludedVerdictCount: number;
   citationCount: number;
   uniqueSourceCount: number;
+  subjectCategoryCount: number;
+  relatedEntityCount: number;
+  publicDiscourseTopicClaimCount: number;
+  publicDiscourseCategoryCount: number;
   sourceFiles: Record<DownloadRole, string>;
   downloads: DatasetDownload[];
 };
@@ -162,12 +166,6 @@ export const datasetStats = {
   contestedClaims: claims.filter(
     (claim) => claim.credible_sources_contest_claim === "Yes",
   ).length,
-  organizationCount: new Set(
-    claims.map((claim) => claim.organization_or_domain).filter(Boolean),
-  ).size,
-  domainCount: new Set(
-    claims.map((claim) => claim.primary_domain).filter(Boolean),
-  ).size,
   claimTypeCount: new Set(
     claims.map((claim) => claim.claim_type).filter(Boolean),
   ).size,
@@ -276,15 +274,7 @@ function groupScores(field: keyof Claim) {
     );
 }
 
-export const organizationScores = groupScores(
-  "organization_or_domain",
-).filter((group) => group.score !== null) as Array<
-  ScoreBreakdown & { score: number }
->;
-
-export const domainScores = groupScores("primary_domain").filter(
-  (group) => group.score !== null,
-) as Array<ScoreBreakdown & { score: number }>;
+export const subjectCategoryScores = groupScores("primary_domain");
 
 export const claimTypeScores = groupScores("claim_type");
 
@@ -500,12 +490,24 @@ export const ratingBands = summary
   })
   .sort((left, right) => right.minimum - left.minimum);
 
-export const organizationNames = [
-  ...new Set(claims.map((claim) => claim.organization_or_domain)),
+export const subjectCategoryNames = [
+  ...new Set(claims.map((claim) => claim.primary_domain)),
 ].sort();
 
-export const domainNames = [
-  ...new Set(claims.map((claim) => claim.primary_domain)),
+export const relatedEntityNames = [
+  ...new Set(
+    claims
+      .map((claim) => claim.related_entity)
+      .filter((entity): entity is string => Boolean(entity)),
+  ),
+].sort();
+
+export const publicDiscourseCategoryNames = [
+  ...new Set(
+    claims
+      .map((claim) => claim.public_discourse_category)
+      .filter((category): category is string => Boolean(category)),
+  ),
 ].sort();
 
 export const claimTypeNames = [
