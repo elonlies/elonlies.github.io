@@ -5,13 +5,16 @@ import {
   classificationKey,
   datasetDownloads,
   datasetStats,
+  evidenceMetricDefinitions,
   formatDate,
+  intentAnswerDistribution,
+  intentAssessmentDistribution,
   migrationChanges,
-  publicDiscourseCategoryNames,
+  organizationContextNames,
   ratingBands,
-  relatedEntityNames,
   subjectCategoryNames,
   subjectCategoryScores,
+  topicCategoryNames,
   verdictTone,
 } from "@/lib/data";
 
@@ -31,9 +34,7 @@ const listFormatter = new Intl.ListFormat("en-US", {
   type: "conjunction",
 });
 const subjectCategoryList = listFormatter.format(subjectCategoryNames);
-const publicDiscourseCategoryList = listFormatter.format(
-  publicDiscourseCategoryNames,
-);
+const topicCategoryList = listFormatter.format(topicCategoryNames);
 
 export default function MethodologyPage() {
   return (
@@ -77,13 +78,13 @@ export default function MethodologyPage() {
               universe is unbounded and includes deleted material, private remarks,
               jokes, opinions, and claims with no testable meaning. The corpus
               deliberately favors consequential, concrete, verifiable claims.
-              {datasetStats.publicDiscourseTopicClaimCount > 0 ? (
+              {datasetStats.topicCategoryClaimCount > 0 ? (
                 <>
                   {" "}
-                  The optional public-discourse topic is populated on{" "}
-                  {datasetStats.publicDiscourseTopicClaimCount} records across{" "}
-                  {datasetStats.publicDiscourseCategoryCount} more specific topics:{" "}
-                  {publicDiscourseCategoryList}.
+                  The optional Topic category is populated on{" "}
+                  {datasetStats.topicCategoryClaimCount} records across{" "}
+                  {datasetStats.topicCategoryCount} cross-cutting topics:{" "}
+                  {topicCategoryList}.
                 </>
               ) : null}
             </p>
@@ -91,10 +92,10 @@ export default function MethodologyPage() {
               <strong>The central limitation is selection bias.</strong>
               <p>
                 This is not a statistically random sample. The public-discourse
-                subset is especially adverse-selected because fact-checkers examine
-                disputed statements rather than random everyday remarks. The score
-                must not be described as the percentage of everything Musk says
-                that is true.
+                topic-tagged subset is especially adverse-selected because
+                fact-checkers examine disputed statements rather than random
+                everyday remarks. The score must not be described as the
+                percentage of everything Musk says that is true.
               </p>
             </div>
           </div>
@@ -142,6 +143,43 @@ export default function MethodologyPage() {
               {datasetStats.uniqueSourceCount} distinct URLs. Statements are
               paraphrased to reduce quotation errors and preserve fair-use
               restraint; the linked source carries the original context.
+            </p>
+            <h3>Evidence structure is scored and audited separately.</h3>
+            <p>
+              Each of the {datasetStats.totalRecords} claims has one source-audit
+              record. The component scores describe how strong and direct the
+              cited evidence is; they are not decimal-level probabilities that a
+              verdict is correct.
+            </p>
+            <div className="score-rules">
+              {evidenceMetricDefinitions
+                .filter((metric) =>
+                  [
+                    "statement_evidence_quality_score",
+                    "outcome_evidence_quality_score",
+                    "corroboration_score",
+                    "directness_score",
+                  ].includes(metric.field),
+                )
+                .map((metric) => (
+                  <article key={metric.field}>
+                    <strong>{metric.maximum}</strong>
+                    <div>
+                      <h3>{metric.label}</h3>
+                      <p>{metric.definition}</p>
+                    </div>
+                  </article>
+                ))}
+            </div>
+            <p className="fine-print">
+              The four components sum to 100. Verdict confidence begins with
+              evidence strength and applies the published deductions for nuance,
+              credible-source disagreement, unresolved conflicts, interested-party
+              evidence, or missing independent corroboration. The current{" "}
+              <code>{datasetStats.evaluationSchemaVersion}</code> package contains{" "}
+              {datasetStats.sourceAuditRecordCount} source audits and{" "}
+              {datasetStats.evaluationAuditRecordCount} field-level evaluation
+              audits covering {datasetStats.auditMetricCount} outputs per claim.
             </p>
           </div>
         </section>
@@ -221,10 +259,42 @@ export default function MethodologyPage() {
               <strong>A lie requires evidence of intent.</strong>
               <p>
                 False, late, unsupported, or reversed does not automatically mean
-                deliberate deception. The dataset tracks intent separately and
-                avoids inferring the speaker’s state of mind from outcome alone.
+                deliberate deception. Every row provides a public Yes, No, or Not
+                assessable answer and a more detailed intent status, while avoiding
+                an inference about state of mind from outcome alone.
               </p>
             </div>
+            <h3>Was intentional deception established?</h3>
+            <div className="intent-method-grid">
+              <div>
+                <h3>Public answer</h3>
+                <dl>
+                  {intentAnswerDistribution.map((entry) => (
+                    <div key={entry.label}>
+                      <dt>{entry.label}</dt>
+                      <dd>{entry.count}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+              <div>
+                <h3>Detailed assessment</h3>
+                <dl>
+                  {intentAssessmentDistribution.map((entry) => (
+                    <div key={entry.label}>
+                      <dt>{entry.label}</dt>
+                      <dd>{entry.count}</dd>
+                    </div>
+                  ))}
+                </dl>
+              </div>
+            </div>
+            <p className="fine-print">
+              “No” means the cited evidence does not establish intentional
+              deception. It does not convert a False, Misleading, Unsupported, or
+              unfulfilled claim into a true one. “Not assessable” is reserved for
+              Pending or Unresolved records.
+            </p>
           </div>
         </section>
 
@@ -269,11 +339,14 @@ export default function MethodologyPage() {
             <p>
               Every row has one of these {subjectCategoryNames.length} subject
               categories in <code>primary_domain</code>. The{" "}
-              <code>related_entity</code> field is an independent context facet,
-              currently containing {relatedEntityNames.length} distinct entities;
-              it does not determine what the claim is about. The optional{" "}
-              <code>public_discourse_category</code> field adds a narrower public
-              topic only where it applies.
+              <code>organization_or_domain</code> field is an independent context
+              facet, currently containing {organizationContextNames.length}{" "}
+              distinct values; it does not determine what the claim is about. The
+              optional <code>public_discourse_category</code> field adds a
+              cross-cutting Topic category wherever it applies, including claims
+              associated with a company.{" "}
+              <code>relationship_to_organization</code> describes how the
+              organization or context relates to Musk.
             </p>
             <p>
               Claim type describes the statement&apos;s form, not its subject. The
@@ -293,10 +366,8 @@ export default function MethodologyPage() {
             </ol>
             <p className="fine-print">
               All names and counts above come from the row-level CSV and update
-              automatically when the data package changes. The legacy{" "}
-              <code>organization_or_domain</code> field remains in the downloadable
-              package for migration and summary-audit compatibility, not as the
-              visitor-facing category system.
+              automatically when the data package changes. None of these context
+              fields limits the subject taxonomy to organizations Musk has owned.
             </p>
           </div>
         </section>
@@ -348,6 +419,12 @@ export default function MethodologyPage() {
               </li>
               <li>Recompute the summary directly from the row-level CSV.</li>
             </ul>
+            <p className="fine-print">
+              Correction and repetition fields describe what is documented in
+              each row&apos;s cited evidence. They are not presented as an
+              exhaustive search of every deleted post, interview, reply, or later
+              repetition.
+            </p>
             <div className="changelog">
               <div>
                 <span>{datasetStats.versionLabel}</span>

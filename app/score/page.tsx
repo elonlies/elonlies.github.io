@@ -5,10 +5,13 @@ import { OutcomeLedger } from "@/components/OutcomeLedger";
 import { SubjectCategoryLedger } from "@/components/ScoreBreakdownLedger";
 import { WeightCalculator } from "@/components/WeightCalculator";
 import {
-  claims,
+  claimIndexRecords,
   datasetStats,
+  intentAnswerDistribution,
+  intentAssessmentDistribution,
   scoreGroups,
   supportMetrics,
+  verdictToneByName,
 } from "@/lib/data";
 
 export const metadata: Metadata = {
@@ -17,6 +20,11 @@ export const metadata: Metadata = {
 };
 
 export default function ScorePage() {
+  const suggestedIntentCount =
+    intentAssessmentDistribution.find(
+      (entry) => entry.label === "Suggested but not established",
+    )?.count ?? 0;
+
   return (
     <main id="main-content">
       <section className="detail-hero detail-hero--score">
@@ -88,6 +96,59 @@ export default function ScorePage() {
               public but do not affect the headline denominator.
             </p>
           </article>
+        </div>
+      </section>
+
+      <section className="section page-shell section--ruled">
+        <div className="section-heading">
+          <div>
+            <p className="eyebrow">Intentional-deception review</p>
+            <h2>Wrong is not automatically a lie.</h2>
+          </div>
+          <p>
+            Every record now answers whether intentional deception was
+            established from its cited evidence. This is a separate,
+            higher-threshold assessment and never mechanically changes the Trust
+            Score.
+          </p>
+        </div>
+        <div className="metric-ledger">
+          {intentAnswerDistribution.map((entry) => (
+            <div className="metric-row" key={entry.label}>
+              <div>
+                <h3>{entry.label}</h3>
+                <p>
+                  {entry.label === "No"
+                    ? "The evidence supports an outcome or accuracy judgment, but does not establish Musk’s state of mind."
+                    : entry.label === "Yes"
+                      ? "The cited record meets the published standard for establishing knowing deception."
+                      : "Pending or unresolved evidence does not support a responsible intent assessment."}
+                </p>
+              </div>
+              <div className="metric-row__value">
+                <strong>
+                  {(
+                    (entry.count / datasetStats.totalRecords) *
+                    100
+                  ).toFixed(1)}
+                  %
+                </strong>
+                <span>
+                  {entry.count} / {datasetStats.totalRecords}
+                </span>
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="callout">
+          <strong>“No” does not mean the statement was true.</strong>
+          <p>
+            It means the available evidence did not establish intentional
+            deception. The more detailed audit separately marks{" "}
+            {suggestedIntentCount} record
+            {suggestedIntentCount === 1 ? "" : "s"} as “Suggested but not
+            established.”
+          </p>
         </div>
       </section>
 
@@ -191,7 +252,11 @@ export default function ScorePage() {
             confidence, contestation status, and intent status.
           </p>
         </div>
-        <ClaimsExplorer claims={claims} />
+        <ClaimsExplorer
+          claims={claimIndexRecords}
+          maxScorePoints={datasetStats.maxScorePoints}
+          verdictTones={verdictToneByName}
+        />
       </section>
 
       <section className="section section--download">

@@ -17,9 +17,12 @@ const defaultDownloadDir = path.join(root, "public", "downloads");
 export const datasetFileNames = Object.freeze({
   claims: "claims.csv",
   summary: "summary.csv",
+  evaluationAudit: "evaluation-audit.csv",
+  sourceAudit: "source-audit.csv",
   methodology: "methodology.md",
   classificationKey: "classification-key.csv",
   migration: "migration.csv",
+  datasetReadme: "dataset-readme.md",
 });
 
 const schemaVersionPattern = /^(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*))*$/;
@@ -57,6 +60,35 @@ const requiredClaimHeaders = [
   "selection_basis",
   "source_quality_notes",
   "methodology_notes",
+  "relationship_to_organization",
+  "repetition_count",
+  "evaluation_schema_version",
+  "evaluation_as_of",
+  "intentional_deception_established",
+  "deception_intent_evidence_level",
+  "deception_intent_rationale",
+  "deception_intent_source_urls",
+  "statement_evidence_quality_score",
+  "outcome_evidence_quality_score",
+  "corroboration_score",
+  "directness_score",
+  "evidence_strength_score",
+  "verdict_confidence_score",
+  "evidence_source_count",
+  "independent_source_domain_count",
+  "evaluation_evidence_urls",
+  "deadline_result_basis",
+  "eventual_outcome_basis",
+  "factual_accuracy_basis",
+  "verdict_basis",
+  "score_points_basis",
+  "include_in_score_basis",
+  "contestation_basis",
+  "correction_basis",
+  "repetition_basis",
+  "confidence_basis",
+  "evidence_audit_status",
+  "evidence_last_reviewed",
 ];
 
 const requiredSummaryHeaders = [
@@ -73,6 +105,57 @@ const requiredSummaryHeaders = [
   "interpretation_and_caveat",
 ];
 
+const requiredEvaluationAuditHeaders = [
+  "record_id",
+  "metric_name",
+  "metric_value",
+  "evidence_basis",
+  "evidence_urls",
+  "evidence_titles",
+  "calculation_rule",
+  "evidence_strength_score",
+  "verdict_confidence_score",
+  "confidence_band",
+  "audit_status",
+];
+
+const requiredSourceAuditHeaders = [
+  "record_id",
+  "statement_source_url",
+  "statement_source_title",
+  "statement_source_tier",
+  "statement_evidence_quality_score",
+  "outcome_source_1_url",
+  "outcome_source_1_title",
+  "outcome_source_2_url",
+  "outcome_source_2_title",
+  "outcome_evidence_quality_score",
+  "corroboration_score",
+  "directness_score",
+  "evidence_strength_score",
+  "verdict_confidence_score",
+  "confidence",
+  "evidence_source_count",
+  "independent_source_domain_count",
+  "credible_sources_contest_claim",
+  "source_audit_status",
+  "notes",
+];
+
+const evaluationMetricFields = Object.freeze({
+  deadline_result: "deadline_result",
+  eventual_outcome: "eventual_outcome",
+  factual_accuracy: "factual_accuracy",
+  verdict_category: "verdict_category",
+  score_points: "score_points",
+  include_in_trust_score: "include_in_trust_score",
+  confidence: "confidence",
+  credible_sources_contest_claim: "credible_sources_contest_claim",
+  correction_status: "correction_status",
+  repeated_after_correction: "repeated_after_correction",
+  intentional_deception_established: "intentional_deception_established",
+});
+
 const summaryGroupDefinitions = [
   {
     sections: ["By subject category", "By primary domain"],
@@ -88,12 +171,21 @@ const summaryGroupDefinitions = [
   },
   { sections: ["By claim type"], field: "claim_type" },
   {
+    sections: ["By relationship"],
+    field: "relationship_to_organization",
+  },
+  {
     sections: ["By relationship to entity"],
     field: "relationship_to_entity",
   },
   {
-    sections: ["Public discourse topic", "Public discourse category"],
+    sections: [
+      "By public discourse category",
+      "Public discourse topic",
+      "Public discourse category",
+    ],
     field: "public_discourse_category",
+    emptyGroup: "(Not applicable)",
   },
 ];
 
@@ -144,6 +236,21 @@ export function formatVersionLabel(schemaVersion) {
 }
 
 function normalizeClassificationRows(rows) {
+  if (rows.some((row) => "section" in row)) {
+    return rows
+      .filter((row) => row.section === "Verdict")
+      .map((row) => ({
+        record_type: "Primary verdict",
+        classification: row.key || "",
+        score_points: row.score_or_value || "",
+        included_in_score: row.include_in_trust_score || "",
+        definition: row.definition || "",
+        promise_or_commitment_display: "",
+        prediction_or_forecast_display: "",
+        implementation_rule: row.calculation_or_rule || "",
+      }));
+  }
+
   return rows
     .filter(
       (row) =>
@@ -161,6 +268,29 @@ function normalizeClassificationRows(rows) {
         row.prediction_or_forecast_display || "",
       implementation_rule: row.implementation_rule || "",
     }));
+}
+
+function classificationRanges(rows, section) {
+  return rows
+    .filter((row) => row.section === section)
+    .map((row) => {
+      const [minimum, maximum] = (row.score_or_value || row.key || "")
+        .match(/\d+(?:\.\d+)?/g)
+        ?.map(Number) ?? [Number.NaN, Number.NaN];
+      return {
+        minimum,
+        maximum,
+        range: `${minimum}–${maximum}`,
+        label: row.display_label || row.key || "",
+      };
+    })
+    .filter(
+      (row) =>
+        row.label !== "" &&
+        Number.isFinite(row.minimum) &&
+        Number.isFinite(row.maximum),
+    )
+    .sort((left, right) => right.minimum - left.minimum);
 }
 
 export function parseCsv(source, fileName = "CSV file") {
@@ -259,7 +389,7 @@ export function discoverDatasetPackage(fileNames) {
   }
   if (unexpectedFiles.length > 0) {
     fail(
-      `data/ must contain only the five stable dataset files. Unexpected files: ${unexpectedFiles.join(", ")}.`,
+      `data/ must contain only the ${expectedFiles.length} stable dataset files. Unexpected files: ${unexpectedFiles.join(", ")}.`,
     );
   }
   if (duplicateFiles.length > 0) {
@@ -282,6 +412,7 @@ function validateSummary({
   claims,
   summary,
   classificationKey,
+  classificationEntries,
   scoredClaims,
   pointsEarned,
   pointsPossible,
@@ -373,7 +504,89 @@ function validateSummary({
     );
   }
 
-  for (const { sections, field } of summaryGroupDefinitions) {
+  const intentStatusGroups = new Set(
+    classificationEntries
+      .filter((row) => row.section === "Intent status")
+      .map((row) => row.key),
+  );
+  const intentAnswerGroups = new Set(
+    [...intentStatusGroups].map((status) =>
+      status === "Established"
+        ? "Yes"
+        : status === "Not assessable"
+          ? "Not assessable"
+          : "No",
+    ),
+  );
+  const confidenceGroups = new Set(
+    classificationRanges(classificationEntries, "Confidence band").map(
+      (band) => band.label,
+    ),
+  );
+  const countSectionDefinitions = [
+    {
+      section: "Intent assessment",
+      metric: "Claim count",
+      field: "deception_intent_status",
+      allowedGroups: intentStatusGroups,
+    },
+    {
+      section: "Intent answer",
+      metric: "Was intentional deception established?",
+      field: "intentional_deception_established",
+      allowedGroups: intentAnswerGroups,
+    },
+    {
+      section: "Evidence confidence",
+      metric: "Claim count",
+      field: "confidence",
+      allowedGroups: confidenceGroups,
+    },
+  ];
+  for (const {
+    section,
+    metric,
+    field,
+    allowedGroups,
+  } of countSectionDefinitions) {
+    const sectionRows = summary.filter(
+      (row) => row.section === section && row.metric === metric,
+    );
+    if (sectionRows.length === 0) continue;
+    const expectedGroups = new Set(
+      claims.map((claim) => claim[field]).filter(Boolean),
+    );
+    const publishedGroups = new Set(sectionRows.map((row) => row.group));
+    if (
+      [...expectedGroups].some((group) => !publishedGroups.has(group)) ||
+      publishedGroups.size !== allowedGroups.size ||
+      [...publishedGroups].some((group) => !allowedGroups.has(group))
+    ) {
+      fail(`${section} summary groups do not match claims.csv.`);
+    }
+    for (const row of sectionRows) {
+      const count = claims.filter(
+        (claim) => claim[field] === row.group,
+      ).length;
+      assertNumericField(
+        row.count,
+        count,
+        `${section} / ${row.group} count`,
+      );
+      assertNumericField(
+        row.total_records,
+        claims.length,
+        `${section} / ${row.group} total_records`,
+      );
+      assertNumericField(
+        row.percentage_or_score,
+        percentage(count, claims.length),
+        `${section} / ${row.group} percentage_or_score`,
+      );
+    }
+  }
+
+  for (const { sections, field, emptyGroup } of summaryGroupDefinitions) {
     const publishedSections = sections.filter((sectionName) =>
       summary.some(
         (row) =>
@@ -390,10 +603,14 @@ function validateSummary({
     const sectionRows = summary.filter(
       (row) => row.section === section && row.metric === "Trust Score",
     );
-    const expectedGroups = new Set(
-      claims.map((claim) => claim[field]).filter(Boolean),
-    );
     const publishedGroups = new Set(sectionRows.map((row) => row.group));
+    const publishesEmptyGroup =
+      emptyGroup !== undefined && publishedGroups.has(emptyGroup);
+    const expectedGroups = new Set(
+      claims
+        .map((claim) => claim[field] || (publishesEmptyGroup ? emptyGroup : ""))
+        .filter(Boolean),
+    );
     const missingGroups = [...expectedGroups].filter(
       (group) => !publishedGroups.has(group),
     );
@@ -410,7 +627,11 @@ function validateSummary({
     }
 
     for (const row of sectionRows) {
-      const groupClaims = claims.filter((claim) => claim[field] === row.group);
+      const groupClaims = claims.filter(
+        (claim) =>
+          (claim[field] || (publishesEmptyGroup ? emptyGroup : "")) ===
+          row.group,
+      );
       const groupScoredClaims = groupClaims.filter(
         (claim) => claim.include_in_trust_score === "Yes",
       );
@@ -449,17 +670,27 @@ function validateSummary({
     }
   }
 
-  const ratingRows = summary
-    .filter(
-      (row) =>
-        row.section === "Rating scale" && row.metric === "Trust Score band",
-    )
-    .map((row) => ({
-      label: row.group,
-      minimum: Number(row.formula_or_rule.match(/\d+(?:\.\d+)?/)?.[0]),
-    }))
-    .filter((row) => Number.isFinite(row.minimum))
-    .sort((left, right) => right.minimum - left.minimum);
+  const classificationRatingRows = classificationRanges(
+    classificationEntries,
+    "Trust rating band",
+  );
+  const ratingRows =
+    classificationRatingRows.length > 0
+      ? classificationRatingRows
+      : summary
+          .filter(
+            (row) =>
+              row.section === "Rating scale" &&
+              row.metric === "Trust Score band",
+          )
+          .map((row) => ({
+            label: row.group,
+            minimum: Number(
+              row.formula_or_rule.match(/\d+(?:\.\d+)?/)?.[0],
+            ),
+          }))
+          .filter((row) => Number.isFinite(row.minimum))
+          .sort((left, right) => right.minimum - left.minimum);
   if (ratingRows.length === 0) {
     fail("summary must define at least one Rating scale / Trust Score band row.");
   }
@@ -473,6 +704,344 @@ function validateSummary({
   }
 
   return overall;
+}
+
+function splitAuditValues(value) {
+  return value
+    .split(";")
+    .map((item) => item.trim())
+    .filter(Boolean);
+}
+
+function averageNumericField(rows, field) {
+  if (rows.length === 0) return null;
+  return Number(
+    (
+      rows.reduce((total, row) => total + Number(row[field]), 0) /
+      rows.length
+    ).toFixed(1),
+  );
+}
+
+function validateAudits({
+  claims,
+  summary,
+  classificationEntries,
+  evaluationAudit,
+  sourceAudit,
+}) {
+  const claimById = new Map(claims.map((claim) => [claim.record_id, claim]));
+  const claimIds = new Set(claimById.keys());
+  const sourceAuditIds = sourceAudit.map((row) => row.record_id);
+  if (
+    sourceAudit.length !== claims.length ||
+    new Set(sourceAuditIds).size !== sourceAudit.length ||
+    sourceAuditIds.some((recordId) => !claimIds.has(recordId))
+  ) {
+    fail("source-audit.csv must contain exactly one row per current claim.");
+  }
+
+  const evidenceMetricMaximums = new Map(
+    classificationEntries
+      .filter((row) => row.section === "Evidence metric")
+      .map((row) => [row.key, Number(row.score_or_value)]),
+  );
+  const componentFields = [
+    "statement_evidence_quality_score",
+    "outcome_evidence_quality_score",
+    "corroboration_score",
+    "directness_score",
+  ];
+  const sourceMirrorFields = [
+    "statement_source_url",
+    "statement_source_title",
+    "statement_source_tier",
+    "outcome_source_1_url",
+    "outcome_source_1_title",
+    "outcome_source_2_url",
+    "outcome_source_2_title",
+    ...componentFields,
+    "evidence_strength_score",
+    "verdict_confidence_score",
+    "confidence",
+    "evidence_source_count",
+    "independent_source_domain_count",
+    "credible_sources_contest_claim",
+  ];
+  const sourceProblems = [];
+  for (const row of sourceAudit) {
+    const claim = claimById.get(row.record_id);
+    if (!claim) continue;
+    for (const field of sourceMirrorFields) {
+      if ((row[field] ?? "") !== (claim[field] ?? "")) {
+        sourceProblems.push(`${row.record_id}: ${field} does not match claims.csv`);
+      }
+    }
+    for (const field of componentFields) {
+      const maximum = evidenceMetricMaximums.get(field);
+      const value = Number(row[field]);
+      if (
+        !Number.isFinite(value) ||
+        maximum === undefined ||
+        value < 0 ||
+        value > maximum
+      ) {
+        sourceProblems.push(`${row.record_id}: invalid ${field}`);
+      }
+    }
+    const componentTotal = componentFields.reduce(
+      (total, field) => total + Number(row[field]),
+      0,
+    );
+    if (componentTotal !== Number(row.evidence_strength_score)) {
+      sourceProblems.push(
+        `${row.record_id}: evidence components do not sum to evidence_strength_score`,
+      );
+    }
+    for (const field of [
+      "evidence_strength_score",
+      "verdict_confidence_score",
+    ]) {
+      const value = Number(row[field]);
+      if (!Number.isFinite(value) || value < 0 || value > 100) {
+        sourceProblems.push(`${row.record_id}: invalid ${field}`);
+      }
+    }
+    if (row.source_audit_status.trim() === "") {
+      sourceProblems.push(`${row.record_id}: missing source_audit_status`);
+    }
+  }
+  if (sourceProblems.length > 0) {
+    fail(`invalid source audit rows:\n- ${sourceProblems.join("\n- ")}`);
+  }
+
+  const expectedMetrics = Object.keys(evaluationMetricFields);
+  const auditKeys = evaluationAudit.map(
+    (row) => `${row.record_id}\u0000${row.metric_name}`,
+  );
+  const evaluationProblems = [];
+  if (
+    evaluationAudit.length !== claims.length * expectedMetrics.length ||
+    new Set(auditKeys).size !== evaluationAudit.length
+  ) {
+    evaluationProblems.push(
+      `expected ${claims.length * expectedMetrics.length} unique claim/metric rows, found ${evaluationAudit.length}`,
+    );
+  }
+  for (const claim of claims) {
+    const publishedMetrics = new Set(
+      evaluationAudit
+        .filter((row) => row.record_id === claim.record_id)
+        .map((row) => row.metric_name),
+    );
+    if (
+      publishedMetrics.size !== expectedMetrics.length ||
+      expectedMetrics.some((metric) => !publishedMetrics.has(metric))
+    ) {
+      evaluationProblems.push(
+        `${claim.record_id}: evaluation audit metric coverage is incomplete`,
+      );
+    }
+  }
+  for (const row of evaluationAudit) {
+    const claim = claimById.get(row.record_id);
+    const claimField = evaluationMetricFields[row.metric_name];
+    if (!claim) {
+      evaluationProblems.push(`${row.record_id}: unknown claim ID`);
+      continue;
+    }
+    if (!claimField) {
+      evaluationProblems.push(
+        `${row.record_id}: unknown metric ${row.metric_name}`,
+      );
+      continue;
+    }
+    if (row.metric_value !== claim[claimField]) {
+      evaluationProblems.push(
+        `${row.record_id} / ${row.metric_name}: value does not match claims.csv`,
+      );
+    }
+    for (const field of [
+      "evidence_basis",
+      "evidence_urls",
+      "evidence_titles",
+      "calculation_rule",
+      "confidence_band",
+      "audit_status",
+    ]) {
+      if (row[field].trim() === "") {
+        evaluationProblems.push(
+          `${row.record_id} / ${row.metric_name}: missing ${field}`,
+        );
+      }
+    }
+    const evidenceUrls = splitAuditValues(row.evidence_urls);
+    if (evidenceUrls.some((url) => !/^https?:\/\//.test(url))) {
+      evaluationProblems.push(
+        `${row.record_id} / ${row.metric_name}: invalid evidence URL`,
+      );
+    }
+    const claimEvidenceUrls = new Set(
+      splitAuditValues(claim.evaluation_evidence_urls),
+    );
+    if (evidenceUrls.some((url) => !claimEvidenceUrls.has(url))) {
+      evaluationProblems.push(
+        `${row.record_id} / ${row.metric_name}: evidence URL is absent from the claim evidence set`,
+      );
+    }
+    const sourceTitlesByUrl = new Map([
+      [claim.statement_source_url, claim.statement_source_title],
+      [claim.outcome_source_1_url, claim.outcome_source_1_title],
+      [claim.outcome_source_2_url, claim.outcome_source_2_title],
+    ]);
+    for (const url of evidenceUrls) {
+      const expectedTitle = sourceTitlesByUrl.get(url);
+      if (
+        expectedTitle &&
+        !row.evidence_titles.includes(expectedTitle)
+      ) {
+        evaluationProblems.push(
+          `${row.record_id} / ${row.metric_name}: evidence title does not match the claim source`,
+        );
+      }
+    }
+    if (
+      row.evidence_strength_score !== claim.evidence_strength_score ||
+      row.verdict_confidence_score !== claim.verdict_confidence_score ||
+      row.confidence_band !== claim.confidence
+    ) {
+      evaluationProblems.push(
+        `${row.record_id} / ${row.metric_name}: evidence scores or confidence do not match claims.csv`,
+      );
+    }
+  }
+  if (evaluationProblems.length > 0) {
+    fail(
+      `invalid evaluation audit rows:\n- ${evaluationProblems.join("\n- ")}`,
+    );
+  }
+
+  const evidenceMetrics = {
+    averageEvidenceStrength: averageNumericField(
+      claims,
+      "evidence_strength_score",
+    ),
+    averageVerdictConfidence: averageNumericField(
+      claims,
+      "verdict_confidence_score",
+    ),
+    rowsWithTwoSources: claims.filter(
+      (claim) => Number(claim.evidence_source_count) >= 2,
+    ).length,
+    rowsWithTwoIndependentDomains: claims.filter(
+      (claim) => Number(claim.independent_source_domain_count) >= 2,
+    ).length,
+    completeAuditClaims: claims.filter((claim) =>
+      claim.evidence_audit_status.startsWith("Complete"),
+    ).length,
+  };
+  const summaryChecks = [
+    ["Average evidence strength", evidenceMetrics.averageEvidenceStrength],
+    ["Average verdict confidence", evidenceMetrics.averageVerdictConfidence],
+    ["Rows with at least two unique cited URLs", evidenceMetrics.rowsWithTwoSources],
+    [
+      "Rows with at least two independent source domains",
+      evidenceMetrics.rowsWithTwoIndependentDomains,
+    ],
+    ["Rows with complete field-level audit", evidenceMetrics.completeAuditClaims],
+  ];
+  for (const [metric, expected] of summaryChecks) {
+    const row = summary.find(
+      (summaryRow) =>
+        summaryRow.section === "Evidence audit" &&
+        summaryRow.metric === metric &&
+        summaryRow.group === "All",
+    );
+    if (!row) fail(`summary is missing Evidence audit / ${metric} / All.`);
+    if (metric.startsWith("Average")) {
+      assertNumericField(
+        row.percentage_or_score,
+        expected,
+        `summary Evidence audit / ${metric}`,
+      );
+    } else {
+      assertNumericField(
+        row.count,
+        expected,
+        `summary Evidence audit / ${metric} count`,
+      );
+      assertNumericField(
+        row.total_records,
+        claims.length,
+        `summary Evidence audit / ${metric} total_records`,
+      );
+      assertNumericField(
+        row.percentage_or_score,
+        percentage(expected, claims.length),
+        `summary Evidence audit / ${metric} percentage_or_score`,
+      );
+    }
+  }
+
+  return {
+    auditMetricCount: expectedMetrics.length,
+    evaluationAuditRecordCount: evaluationAudit.length,
+    sourceAuditRecordCount: sourceAudit.length,
+    ...evidenceMetrics,
+  };
+}
+
+function normalizeMigrationRows(rows, schemaVersion) {
+  const explicitSourceVersions = [
+    ...new Set(
+      rows
+        .map((row) => row.old_schema_version)
+        .filter((version) => version),
+    ),
+  ];
+  const statusSourceVersions = [
+    ...new Set(
+      rows
+        .map((row) => row.row_status?.match(/from v(\d+(?:\.\d+)*)/i)?.[1])
+        .filter(Boolean),
+    ),
+  ].map((version) => (version.includes(".") ? version : `${version}.0`));
+  const sourceVersions =
+    explicitSourceVersions.length > 0
+      ? explicitSourceVersions
+      : statusSourceVersions;
+  if (sourceVersions.length !== 1) {
+    fail(
+      `migration must identify one prior schema version; found ${sourceVersions.join(", ") || "none"}.`,
+    );
+  }
+  const [sourceSchemaVersion] = sourceVersions;
+  const migration = rows.map((row) => {
+    if (
+      row.new_schema_version &&
+      row.new_schema_version !== schemaVersion
+    ) {
+      fail(
+        `migration new_schema_version must be ${schemaVersion}; found ${row.new_schema_version} for ${row.record_id}.`,
+      );
+    }
+    const migratedFromPrior =
+      Boolean(row.old_schema_version) ||
+      /from v\d/i.test(row.row_status || "");
+    return {
+      ...row,
+      old_schema_version:
+        row.old_schema_version ||
+        (migratedFromPrior ? sourceSchemaVersion : ""),
+      new_schema_version: row.new_schema_version || schemaVersion,
+      change_type: row.change_type || row.row_status || "Updated",
+      change_note:
+        row.change_note ||
+        row.changes ||
+        "See the source-provided migration CSV for row-level history.",
+    };
+  });
+  return { migration, sourceSchemaVersion };
 }
 
 export async function buildDataset({
@@ -498,19 +1067,33 @@ export async function buildDataset({
   const [
     claimsSource,
     summarySource,
+    evaluationAuditSource,
+    sourceAuditSource,
     classificationSource,
     migrationSource,
     methodology,
+    datasetReadme,
   ] = await Promise.all([
     readPackageFile("claims"),
     readPackageFile("summary"),
+    readPackageFile("evaluationAudit"),
+    readPackageFile("sourceAudit"),
     readPackageFile("classificationKey"),
     readPackageFile("migration"),
     readPackageFile("methodology"),
+    readPackageFile("datasetReadme"),
   ]);
 
   const claimsCsv = parseCsv(claimsSource, packageFiles.claims.fileName);
   const summaryCsv = parseCsv(summarySource, packageFiles.summary.fileName);
+  const evaluationAuditCsv = parseCsv(
+    evaluationAuditSource,
+    packageFiles.evaluationAudit.fileName,
+  );
+  const sourceAuditCsv = parseCsv(
+    sourceAuditSource,
+    packageFiles.sourceAudit.fileName,
+  );
   const classificationCsv = parseCsv(
     classificationSource,
     packageFiles.classificationKey.fileName,
@@ -531,31 +1114,53 @@ export async function buildDataset({
     packageFiles.summary.fileName,
   );
   requireHeaders(
-    classificationCsv.headers,
-    ["score_points", "included_in_score", "definition"],
-    packageFiles.classificationKey.fileName,
+    evaluationAuditCsv.headers,
+    requiredEvaluationAuditHeaders,
+    packageFiles.evaluationAudit.fileName,
   );
+  requireHeaders(
+    sourceAuditCsv.headers,
+    requiredSourceAuditHeaders,
+    packageFiles.sourceAudit.fileName,
+  );
+  const hasCurrentClassificationShape = [
+    "section",
+    "key",
+    "display_label",
+    "score_or_value",
+    "include_in_trust_score",
+    "definition",
+    "calculation_or_rule",
+  ].every((header) => classificationCsv.headers.includes(header));
+  const hasLegacyClassificationShape =
+    ["score_points", "included_in_score", "definition"].every((header) =>
+      classificationCsv.headers.includes(header),
+    ) &&
+    (classificationCsv.headers.includes("label") ||
+      classificationCsv.headers.includes("classification"));
   if (
-    !classificationCsv.headers.includes("label") &&
-    !classificationCsv.headers.includes("classification")
+    !hasCurrentClassificationShape &&
+    !hasLegacyClassificationShape
   ) {
     fail(
-      `${packageFiles.classificationKey.fileName} needs a label or classification column.`,
+      `${packageFiles.classificationKey.fileName} does not match a supported classification-key schema.`,
     );
   }
   requireHeaders(
     migrationCsv.headers,
-    ["record_id", "old_schema_version", "new_schema_version"],
+    ["record_id"],
     packageFiles.migration.fileName,
   );
 
   const claims = claimsCsv.records;
   const summary = summaryCsv.records;
+  const evaluationAudit = evaluationAuditCsv.records;
+  const sourceAudit = sourceAuditCsv.records;
   const classificationEntries = classificationCsv.records;
   const classificationKey = normalizeClassificationRows(
     classificationEntries,
   );
-  const migration = migrationCsv.records;
+  const migrationSourceRows = migrationCsv.records;
 
   if (claims.length === 0) fail("the claims CSV has no records.");
   if (classificationKey.length === 0) {
@@ -595,6 +1200,41 @@ export async function buildDataset({
   if (!isValidIsoDate(evaluationDate)) {
     fail(
       `evaluation_date "${evaluationDate}" must use a valid YYYY-MM-DD date.`,
+    );
+  }
+  const evaluationSchemaVersions = new Set(
+    claims.map((claim) => claim.evaluation_schema_version),
+  );
+  if (
+    evaluationSchemaVersions.size !== 1 ||
+    evaluationSchemaVersions.has("")
+  ) {
+    fail(
+      `claims must share one nonblank evaluation_schema_version; found ${[
+        ...evaluationSchemaVersions,
+      ].join(", ")}.`,
+    );
+  }
+  const evaluationSchemaVersion = [...evaluationSchemaVersions][0];
+  const { migration, sourceSchemaVersion } = normalizeMigrationRows(
+    migrationSourceRows,
+    schemaVersion,
+  );
+  const sourceVersionLabel = formatVersionLabel(sourceSchemaVersion);
+  const migrationLabel = `${sourceVersionLabel} → ${versionLabel} source-package migration`;
+  const normalizedDatasetReadme = datasetReadme.replaceAll("**", "");
+  if (
+    !normalizedDatasetReadme
+      .toLowerCase()
+      .includes(versionLabel.toLowerCase()) ||
+    ![
+      `Dataset version: ${schemaVersion}`,
+      `Schema version: ${schemaVersion}`,
+    ].some((marker) => normalizedDatasetReadme.includes(marker)) ||
+    !normalizedDatasetReadme.includes(`Evaluation date: ${evaluationDate}`)
+  ) {
+    fail(
+      `${packageFiles.datasetReadme.fileName} does not identify ${versionLabel} and evaluation date ${evaluationDate}.`,
     );
   }
 
@@ -639,6 +1279,30 @@ export async function buildDataset({
     fail("the classification key needs at least one positive scored verdict.");
   }
 
+  const intentStatuses = new Set(
+    classificationEntries
+      .filter((row) => row.section === "Intent status")
+      .map((row) => row.key),
+  );
+  const intentEvidenceLevels = new Set(
+    classificationEntries
+      .filter((row) => row.section === "Intent evidence level")
+      .map((row) => row.key),
+  );
+  const intentAnswers = new Set(
+    summary
+      .filter((row) => row.section === "Intent answer")
+      .map((row) => row.group),
+  );
+  const confidenceBands = classificationRanges(
+    classificationEntries,
+    "Confidence band",
+  );
+  const topicCategories = new Set(
+    classificationEntries
+      .filter((row) => row.section === "Public discourse category")
+      .map((row) => row.key),
+  );
   const invalidClaims = [];
   for (const claim of claims) {
     const rule = classificationByName.get(claim.verdict_category);
@@ -653,11 +1317,35 @@ export async function buildDataset({
       "classification_rationale",
       "outcome_summary",
       "confidence",
+      "intentional_deception_established",
+      "deception_intent_status",
+      "deception_intent_evidence_level",
+      "deception_intent_rationale",
+      "statement_evidence_quality_score",
+      "outcome_evidence_quality_score",
+      "corroboration_score",
+      "directness_score",
+      "evidence_strength_score",
+      "verdict_confidence_score",
+      "evaluation_evidence_urls",
+      "deadline_result_basis",
+      "eventual_outcome_basis",
+      "factual_accuracy_basis",
+      "verdict_basis",
+      "score_points_basis",
+      "include_in_score_basis",
+      "contestation_basis",
+      "correction_basis",
+      "repetition_basis",
+      "confidence_basis",
+      "evidence_audit_status",
+      "evidence_last_reviewed",
     ];
     const taxonomyFields = [
       "organization_or_domain",
       "primary_domain",
       "claim_type",
+      "relationship_to_organization",
       "related_entity",
       "relationship_to_entity",
       "public_discourse_category",
@@ -676,14 +1364,9 @@ export async function buildDataset({
       }
     }
     if (
-      claim.public_discourse_category?.trim() &&
-      claim.organization_or_domain !== "Public discourse"
+      !/^\d{4}(?:-\d{2}(?:-\d{2})?)?$/.test(claim.statement_date) &&
+      claim.statement_date !== "Undated profile"
     ) {
-      problems.push(
-        "public_discourse_category is only valid for Public discourse records",
-      );
-    }
-    if (!/^\d{4}(?:-\d{2}(?:-\d{2})?)?$/.test(claim.statement_date)) {
       problems.push(`invalid statement_date "${claim.statement_date}"`);
     }
     if (!["Yes", "No"].includes(claim.include_in_trust_score)) {
@@ -702,6 +1385,91 @@ export async function buildDataset({
     }
     if (claim.outcome_source_1_title === "") {
       problems.push("missing primary outcome source title");
+    }
+    const outcomeSourceIndexes = Object.keys(claim)
+      .map((field) => field.match(/^outcome_source_(\d+)_url$/)?.[1])
+      .filter(Boolean);
+    for (const index of outcomeSourceIndexes) {
+      const url = claim[`outcome_source_${index}_url`];
+      const title = claim[`outcome_source_${index}_title`];
+      if (url && !/^https?:\/\//.test(url)) {
+        problems.push(`invalid outcome source ${index} URL`);
+      }
+      if (url && !title) {
+        problems.push(`outcome source ${index} is missing a title`);
+      }
+      if (!url && title) {
+        problems.push(`outcome source ${index} has a title but no URL`);
+      }
+    }
+    for (const [field, value] of [
+      ["deception_intent_source_urls", claim.deception_intent_source_urls],
+      ["evaluation_evidence_urls", claim.evaluation_evidence_urls],
+    ]) {
+      if (
+        splitAuditValues(value).some(
+          (url) => !/^https?:\/\//.test(url),
+        )
+      ) {
+        problems.push(`${field} contains an invalid URL`);
+      }
+    }
+    if (
+      claim.evaluation_as_of !== evaluationDate ||
+      claim.evidence_last_reviewed !== evaluationDate
+    ) {
+      problems.push(
+        "evaluation_as_of and evidence_last_reviewed must match evaluation_date",
+      );
+    }
+    if (
+      claim.include_in_trust_score === "No" &&
+      claim.intentional_deception_established !== "Not assessable"
+    ) {
+      problems.push("excluded claims must mark intent as Not assessable");
+    }
+    if (
+      claim.include_in_trust_score === "Yes" &&
+      claim.intentional_deception_established === "Not assessable"
+    ) {
+      problems.push("scored claims need a Yes or No intent answer");
+    }
+    if (
+      !intentStatuses.has(claim.deception_intent_status) ||
+      !intentEvidenceLevels.has(claim.deception_intent_evidence_level) ||
+      !intentAnswers.has(claim.intentional_deception_established)
+    ) {
+      problems.push("intent fields do not match the published classification key");
+    }
+    if (
+      claim.public_discourse_category &&
+      !topicCategories.has(claim.public_discourse_category)
+    ) {
+      problems.push(
+        "public_discourse_category is absent from the classification key",
+      );
+    }
+    const expectedIntentAnswer =
+      claim.deception_intent_status === "Established"
+        ? "Yes"
+        : claim.deception_intent_status === "Not assessable"
+          ? "Not assessable"
+          : "No";
+    if (claim.intentional_deception_established !== expectedIntentAnswer) {
+      problems.push(
+        "intentional_deception_established does not match deception_intent_status",
+      );
+    }
+    const confidenceScore = Number(claim.verdict_confidence_score);
+    const expectedConfidence = confidenceBands.find(
+      (band) =>
+        confidenceScore >= band.minimum &&
+        confidenceScore <= band.maximum,
+    )?.label;
+    if (!expectedConfidence || claim.confidence !== expectedConfidence) {
+      problems.push(
+        "confidence does not match the verdict_confidence_score band",
+      );
     }
 
     if (rule) {
@@ -764,9 +1532,11 @@ export async function buildDataset({
       }.`,
     );
   }
-  const sourceSchemaVersion = sourceSchemaVersions[0];
-  const sourceVersionLabel = formatVersionLabel(sourceSchemaVersion);
-  const migrationLabel = `${sourceVersionLabel} → ${versionLabel} migration`;
+  if (sourceSchemaVersions[0] !== sourceSchemaVersion) {
+    fail(
+      `migration source version drifted: expected ${sourceSchemaVersion}, found ${sourceSchemaVersions[0]}.`,
+    );
+  }
 
   const scoredClaims = claims.filter(
     (claim) => claim.include_in_trust_score === "Yes",
@@ -783,6 +1553,7 @@ export async function buildDataset({
     claims,
     summary,
     classificationKey,
+    classificationEntries,
     scoredClaims,
     pointsEarned,
     pointsPossible,
@@ -790,12 +1561,26 @@ export async function buildDataset({
     maxScorePoints,
   });
 
+  const auditMetrics = validateAudits({
+    claims,
+    summary,
+    classificationEntries,
+    evaluationAudit,
+    sourceAudit,
+  });
+  const normalizedMethodology = methodology.replaceAll("**", "");
   if (
-    !methodology.includes(`Dataset version:** ${schemaVersion}`) ||
-    !methodology.includes(`Evaluation date:** ${evaluationDate}`)
+    ![
+      `Dataset version: ${schemaVersion}`,
+      `Schema version: ${schemaVersion}`,
+    ].some((marker) => normalizedMethodology.includes(marker)) ||
+    !normalizedMethodology.includes(`Evaluation date: ${evaluationDate}`) ||
+    !normalizedMethodology.includes(
+      `Evidence audit schema: ${evaluationSchemaVersion}`,
+    )
   ) {
     fail(
-      `${packageFiles.methodology.fileName} does not identify schema ${schemaVersion} and evaluation date ${evaluationDate}.`,
+      `${packageFiles.methodology.fileName} does not identify schema ${schemaVersion}, evaluation date ${evaluationDate}, and evidence audit schema ${evaluationSchemaVersion}.`,
     );
   }
 
@@ -818,6 +1603,16 @@ export async function buildDataset({
       fileName: sourceFiles.summary,
     },
     {
+      role: "evaluationAudit",
+      label: "Field-level evaluation audit",
+      fileName: sourceFiles.evaluationAudit,
+    },
+    {
+      role: "sourceAudit",
+      label: "Source and evidence-score audit",
+      fileName: sourceFiles.sourceAudit,
+    },
+    {
       role: "methodology",
       label: "Full methodology",
       fileName: sourceFiles.methodology,
@@ -832,6 +1627,11 @@ export async function buildDataset({
       label: migrationLabel,
       fileName: sourceFiles.migration,
     },
+    {
+      role: "datasetReadme",
+      label: "Dataset package guide",
+      fileName: sourceFiles.datasetReadme,
+    },
   ].map((download) => ({
     ...download,
     href: `/downloads/${download.fileName}`,
@@ -845,6 +1645,7 @@ export async function buildDataset({
       sourceVersionLabel,
       migrationLabel,
       evaluationDate,
+      evaluationSchemaVersion,
       fieldCount: claimsCsv.headers.length,
       totalRecords: claims.length,
       scoredClaims: scoredClaims.length,
@@ -864,20 +1665,41 @@ export async function buildDataset({
       ).length,
       citationCount: citationUrls.length,
       uniqueSourceCount: new Set(citationUrls).size,
+      undatedClaimCount: claims.filter(
+        (claim) => !/^\d{4}/.test(claim.statement_date),
+      ).length,
       subjectCategoryCount: new Set(
         claims.map((claim) => claim.primary_domain).filter(Boolean),
       ).size,
-      relatedEntityCount: new Set(
-        claims.map((claim) => claim.related_entity).filter(Boolean),
+      organizationContextCount: new Set(
+        claims.map((claim) => claim.organization_or_domain).filter(Boolean),
       ).size,
-      publicDiscourseTopicClaimCount: claims.filter(
+      topicCategoryClaimCount: claims.filter(
         (claim) => claim.public_discourse_category,
       ).length,
-      publicDiscourseCategoryCount: new Set(
+      topicCategoryCount: new Set(
         claims
           .map((claim) => claim.public_discourse_category)
           .filter(Boolean),
       ).size,
+      intentAnswerCounts: Object.fromEntries(
+        [...intentAnswers].map((answer) => [
+          answer,
+          claims.filter(
+            (claim) =>
+              claim.intentional_deception_established === answer,
+          ).length,
+        ]),
+      ),
+      intentAssessmentCounts: Object.fromEntries(
+        [...intentStatuses].map((status) => [
+          status,
+          claims.filter(
+            (claim) => claim.deception_intent_status === status,
+          ).length,
+        ]),
+      ),
+      ...auditMetrics,
       sourceFiles,
       downloads,
     },
@@ -885,8 +1707,23 @@ export async function buildDataset({
     summary,
     classificationKey,
     classificationEntries,
+    ratingBands: classificationRanges(
+      classificationEntries,
+      "Trust rating band",
+    ),
     migration,
   };
+  const evaluationAuditByClaim = Object.fromEntries(
+    claims.map((claim) => [
+      claim.record_id,
+      evaluationAudit.filter(
+        (row) => row.record_id === claim.record_id,
+      ),
+    ]),
+  );
+  const sourceAuditByClaim = Object.fromEntries(
+    sourceAudit.map((row) => [row.record_id, row]),
+  );
 
   if (writeOutputs) {
     await Promise.all([
@@ -897,10 +1734,20 @@ export async function buildDataset({
       mkdir(generatedDir, { recursive: true }),
       mkdir(downloadDir, { recursive: true }),
     ]);
-    await writeFile(
-      path.join(generatedDir, "dataset.json"),
-      `${JSON.stringify(dataset, null, 2)}\n`,
-    );
+    await Promise.all([
+      writeFile(
+        path.join(generatedDir, "dataset.json"),
+        `${JSON.stringify(dataset, null, 2)}\n`,
+      ),
+      writeFile(
+        path.join(generatedDir, "evaluation-audit.json"),
+        `${JSON.stringify(evaluationAuditByClaim, null, 2)}\n`,
+      ),
+      writeFile(
+        path.join(generatedDir, "source-audit.json"),
+        `${JSON.stringify(sourceAuditByClaim, null, 2)}\n`,
+      ),
+    ]);
     await Promise.all(
       Object.values(sourceFiles).map((fileName) =>
         copyFile(
@@ -911,7 +1758,11 @@ export async function buildDataset({
     );
   }
 
-  return dataset;
+  return {
+    ...dataset,
+    evaluationAudit,
+    sourceAudit,
+  };
 }
 
 const isMain =

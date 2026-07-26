@@ -145,6 +145,11 @@ export default function VisualizationsPage() {
             dataset, not a random sample of everything Musk said in each year. A{" "}
             {zeroPointVerdictLabel} verdict also does not by itself establish a
             deliberate lie.
+            {datasetStats.undatedClaimCount > 0
+              ? ` ${datasetStats.undatedClaimCount} genuinely undated record${
+                  datasetStats.undatedClaimCount === 1 ? " is" : "s are"
+                } excluded from the yearly charts rather than assigned an invented date.`
+              : ""}
           </p>
         </div>
 

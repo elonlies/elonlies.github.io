@@ -2,10 +2,17 @@ import type { Metadata } from "next";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import {
+  auditSources,
+  findEvaluationAudit,
+  findSourceAudit,
+  splitAuditValues,
+} from "@/lib/audit-data";
+import {
   claimScore,
   claimSources,
   claims,
   datasetStats,
+  evidenceMetricDefinitions,
   findClaim,
   findClassificationRule,
   findMigration,
@@ -68,6 +75,28 @@ function ExternalSource({
   );
 }
 
+function formatMetricName(value: string) {
+  const labels: Record<string, string> = {
+    deadline_result: "Deadline result",
+    eventual_outcome: "Eventual outcome",
+    factual_accuracy: "Factual accuracy",
+    verdict_category: "Canonical verdict",
+    score_points: "Score points",
+    include_in_trust_score: "Inclusion in the Trust Score",
+    confidence: "Research confidence",
+    credible_sources_contest_claim: "Credible-source contestation",
+    correction_status: "Correction status",
+    repeated_after_correction: "Repetition after correction",
+    intentional_deception_established: "Intentional-deception answer",
+  };
+  return (
+    labels[value] ??
+    value
+      .replaceAll("_", " ")
+      .replace(/\b\w/g, (character) => character.toUpperCase())
+  );
+}
+
 export default async function ClaimPage({ params }: ClaimPageProps) {
   const { id } = await params;
   const claim = findClaim(id);
@@ -77,6 +106,26 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
   const scorePercentage =
     score === null ? null : (score / datasetStats.maxScorePoints) * 100;
   const sources = claimSources(claim);
+  const sourceTitleByUrl = new Map(
+    sources.map((source) => [source.href, source.title]),
+  );
+  const intentSources = splitAuditValues(
+    claim.deception_intent_source_urls,
+  ).map((href, index) => ({
+    href,
+    title: sourceTitleByUrl.get(href) ?? `Intent evidence ${index + 1}`,
+  }));
+  const evaluationAudit = findEvaluationAudit(claim.record_id);
+  const sourceAudit = findSourceAudit(claim.record_id);
+  const evidenceComponents = evidenceMetricDefinitions.filter((metric) =>
+    [
+      "statement_evidence_quality_score",
+      "outcome_evidence_quality_score",
+      "corroboration_score",
+      "directness_score",
+    ].includes(metric.field),
+  );
+  const sensitiveTopicTags = splitAuditValues(claim.sensitive_topic_tags);
   const migrationRow = findMigration(claim.record_id);
   const claimIndex = claims.findIndex((item) => item.record_id === claim.record_id);
   const previousClaim = claimIndex > 0 ? claims[claimIndex - 1] : null;
@@ -98,7 +147,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
               {claim.public_discourse_category ? (
                 <span>{claim.public_discourse_category}</span>
               ) : null}
-              {claim.related_entity ? <span>{claim.related_entity}</span> : null}
+              <span>{claim.organization_or_domain}</span>
               <span>{claim.claim_type}</span>
             </div>
             <h1>{claim.statement_paraphrase}</h1>
@@ -192,20 +241,18 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                 </div>
                 {claim.public_discourse_category ? (
                   <div>
-                    <dt>Public discourse topic</dt>
+                    <dt>Topic category</dt>
                     <dd>{claim.public_discourse_category}</dd>
                   </div>
                 ) : null}
-                {claim.related_entity ? (
+                <div>
+                  <dt>Organization or context</dt>
+                  <dd>{claim.organization_or_domain}</dd>
+                </div>
+                {claim.relationship_to_organization ? (
                   <div>
-                    <dt>Related entity</dt>
-                    <dd>{claim.related_entity}</dd>
-                  </div>
-                ) : null}
-                {claim.relationship_to_entity ? (
-                  <div>
-                    <dt>Relationship to entity</dt>
-                    <dd>{claim.relationship_to_entity}</dd>
+                    <dt>Relationship to organization</dt>
+                    <dd>{claim.relationship_to_organization}</dd>
                   </div>
                 ) : null}
                 {claim.assertion_mode ? (
@@ -286,29 +333,156 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                     <dd>{claim.repeated_after_correction}</dd>
                   </div>
                 ) : null}
-                {claim.documented_repetition_count ? (
+                {claim.repetition_count ? (
                   <div>
-                    <dt>Documented repetition count</dt>
-                    <dd>{claim.documented_repetition_count}</dd>
+                    <dt>Evidence-documented repetition count</dt>
+                    <dd>{claim.repetition_count}</dd>
+                  </div>
+                ) : null}
+                {sensitiveTopicTags.length > 0 ? (
+                  <div>
+                    <dt>Sensitive-topic metadata</dt>
+                    <dd>{sensitiveTopicTags.join(" · ")}</dd>
                   </div>
                 ) : null}
               </dl>
+              {claim.sensitive_topic_note ? (
+                <p className="detail-note">{claim.sensitive_topic_note}</p>
+              ) : null}
             </section>
 
             <section className="detail-panel" aria-labelledby="intent-title">
               <p className="eyebrow">Intent stays separate</p>
               <h2 id="intent-title">Was intentional deception established?</h2>
-              <p className="intent-answer">{claim.deception_intent_status}</p>
-              <p>
-                This field is not inferred from a missed deadline or inaccurate
-                outcome. The project uses “lie” only when evidence addresses the
-                speaker’s state of mind, not as a synonym for “wrong.”
+              <p
+                className={`intent-answer intent-answer--${
+                  claim.intentional_deception_established === "Yes"
+                    ? "established"
+                    : claim.intentional_deception_established ===
+                        "Not assessable"
+                      ? "not-assessable"
+                      : "not-established"
+                }`}
+              >
+                {claim.intentional_deception_established}
               </p>
+              <dl className="intent-details">
+                <div>
+                  <dt>Detailed assessment</dt>
+                  <dd>{claim.deception_intent_status}</dd>
+                </div>
+                <div>
+                  <dt>Intent evidence level</dt>
+                  <dd>{claim.deception_intent_evidence_level} / 3</dd>
+                </div>
+              </dl>
+              <p>{claim.deception_intent_rationale}</p>
+              <p>
+                “No” does not mean the statement was true. It means the cited
+                evidence did not meet the higher standard needed to establish the
+                speaker&apos;s state of mind.
+              </p>
+              {intentSources.length > 0 ? (
+                <div className="intent-sources" aria-label="Intent evidence">
+                  {intentSources.map((source, index) => (
+                    <a
+                      href={source.href}
+                      target="_blank"
+                      rel="noreferrer"
+                      key={`${source.href}-${index}`}
+                    >
+                      {source.title} <span aria-hidden="true">↗</span>
+                    </a>
+                  ))}
+                </div>
+              ) : null}
               <Link className="text-link" href="/methodology#intent">
                 Why this distinction matters <span aria-hidden="true">→</span>
               </Link>
             </section>
           </div>
+
+          <section
+            className="evidence-strength"
+            aria-labelledby="evidence-strength-title"
+          >
+            <div className="subsection-heading">
+              <p className="eyebrow">Evidence strength</p>
+              <h2 id="evidence-strength-title">
+                A disclosed measure of evidence quality—not a probability.
+              </h2>
+              <p>
+                Component scores measure source quality, corroboration, and
+                directness. Verdict confidence begins with that evidence strength
+                and applies the deductions documented in the methodology.
+              </p>
+            </div>
+            <div className="evidence-strength__layout">
+              <div className="evidence-strength__totals">
+                <article>
+                  <span>Evidence strength</span>
+                  <strong>{claim.evidence_strength_score}</strong>
+                  <small>of 100</small>
+                </article>
+                <article>
+                  <span>Verdict confidence</span>
+                  <strong>{claim.verdict_confidence_score}</strong>
+                  <small>{claim.confidence}</small>
+                </article>
+              </div>
+              <div className="evidence-components">
+                {evidenceComponents.map((metric) => {
+                  const value = Number(claim[metric.field] ?? 0);
+                  const width =
+                    metric.maximum === 0
+                      ? 0
+                      : Math.min(100, (value / metric.maximum) * 100);
+                  return (
+                    <div className="evidence-component" key={metric.field}>
+                      <div>
+                        <strong>{metric.label}</strong>
+                        <span>
+                          {value} / {metric.maximum}
+                        </span>
+                      </div>
+                      <div
+                        className="evidence-component__rail"
+                        aria-hidden="true"
+                      >
+                        <span style={{ width: `${width}%` }} />
+                      </div>
+                      <p>{metric.definition}</p>
+                    </div>
+                  );
+                })}
+              </div>
+              <dl className="evidence-strength__facts">
+                <div>
+                  <dt>Evidence sources</dt>
+                  <dd>{claim.evidence_source_count}</dd>
+                </div>
+                <div>
+                  <dt>Independent source domains</dt>
+                  <dd>{claim.independent_source_domain_count}</dd>
+                </div>
+                <div>
+                  <dt>Claim audit</dt>
+                  <dd>{claim.evidence_audit_status}</dd>
+                </div>
+                {sourceAudit ? (
+                  <div>
+                    <dt>Source audit</dt>
+                    <dd>{sourceAudit.source_audit_status}</dd>
+                  </div>
+                ) : null}
+              </dl>
+            </div>
+            {sourceAudit?.notes ? (
+              <p className="fine-print evidence-strength__note">
+                {sourceAudit.notes}
+              </p>
+            ) : null}
+          </section>
 
           <section className="sources-section" aria-labelledby="sources-title">
             <div className="subsection-heading">
@@ -323,6 +497,80 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                   label={source.label}
                   key={source.key}
                 />
+              ))}
+            </div>
+          </section>
+
+          <section
+            className="evaluation-audit"
+            aria-labelledby="evaluation-audit-title"
+          >
+            <div className="subsection-heading">
+              <p className="eyebrow">Field-level evaluation audit</p>
+              <h2 id="evaluation-audit-title">
+                Every calculated output carries its own evidence basis.
+              </h2>
+              <p>
+                Open any of the {evaluationAudit.length} audited outputs to see
+                its calculated value, written basis, rule, and cited sources.
+              </p>
+            </div>
+            <div className="evaluation-audit__list">
+              {evaluationAudit.map((row, index) => (
+                <details
+                  className="evaluation-audit__item"
+                  key={row.metric_name}
+                >
+                  <summary>
+                    <span>{String(index + 1).padStart(2, "0")}</span>
+                    <span>
+                      <strong>{formatMetricName(row.metric_name)}</strong>
+                      <small>{row.metric_value}</small>
+                    </span>
+                    <span aria-hidden="true">+</span>
+                  </summary>
+                  <div className="evaluation-audit__body">
+                    <div>
+                      <p className="eyebrow">Evidence basis</p>
+                      <p>{row.evidence_basis}</p>
+                    </div>
+                    <div>
+                      <p className="eyebrow">Calculation rule</p>
+                      <p>{row.calculation_rule}</p>
+                    </div>
+                    <dl>
+                      <div>
+                        <dt>Evidence strength</dt>
+                        <dd>{row.evidence_strength_score} / 100</dd>
+                      </div>
+                      <div>
+                        <dt>Verdict confidence</dt>
+                        <dd>
+                          {row.verdict_confidence_score} / 100 ·{" "}
+                          {row.confidence_band}
+                        </dd>
+                      </div>
+                      <div>
+                        <dt>Audit status</dt>
+                        <dd>{row.audit_status}</dd>
+                      </div>
+                    </dl>
+                    <div className="evaluation-audit__sources">
+                      {auditSources(row, sourceTitleByUrl).map(
+                        (source, sourceIndex) => (
+                          <a
+                            href={source.href}
+                            target="_blank"
+                            rel="noreferrer"
+                            key={`${source.href}-${sourceIndex}`}
+                          >
+                            {source.title} <span aria-hidden="true">↗</span>
+                          </a>
+                        ),
+                      )}
+                    </div>
+                  </div>
+                </details>
               ))}
             </div>
           </section>

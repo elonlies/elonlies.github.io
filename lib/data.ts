@@ -3,12 +3,16 @@ import rawDataset from "@/generated-data/dataset.json";
 export type Claim = {
   [key: string]: string | undefined;
   record_id: string;
+  claim_family_id: string;
   schema_version: string;
   statement_date: string;
   organization_or_domain: string;
+  relationship_to_organization: string;
   primary_domain: string;
+  public_discourse_category: string;
   topic: string;
   claim_type: string;
+  assertion_mode: string;
   statement_paraphrase: string;
   target_date_or_timeframe: string;
   statement_source_url: string;
@@ -34,15 +38,41 @@ export type Claim = {
   selection_basis: string;
   source_quality_notes: string;
   methodology_notes: string;
-  related_entity?: string;
-  relationship_to_entity?: string;
-  public_discourse_category?: string;
-  assertion_mode?: string;
-  correction_status?: string;
-  correction_date?: string;
-  deleted_after_challenge?: string;
-  repeated_after_correction?: string;
-  documented_repetition_count?: string;
+  correction_status: string;
+  correction_date: string;
+  deleted_after_challenge: string;
+  repeated_after_correction: string;
+  repetition_count: string;
+  materiality_reason: string;
+  evaluation_schema_version: string;
+  evaluation_as_of: string;
+  sensitive_topic_tags: string;
+  sensitive_topic_note: string;
+  intentional_deception_established: string;
+  deception_intent_evidence_level: string;
+  deception_intent_rationale: string;
+  deception_intent_source_urls: string;
+  statement_evidence_quality_score: string;
+  outcome_evidence_quality_score: string;
+  corroboration_score: string;
+  directness_score: string;
+  evidence_strength_score: string;
+  verdict_confidence_score: string;
+  evidence_source_count: string;
+  independent_source_domain_count: string;
+  evaluation_evidence_urls: string;
+  deadline_result_basis: string;
+  eventual_outcome_basis: string;
+  factual_accuracy_basis: string;
+  verdict_basis: string;
+  score_points_basis: string;
+  include_in_score_basis: string;
+  contestation_basis: string;
+  correction_basis: string;
+  repetition_basis: string;
+  confidence_basis: string;
+  evidence_audit_status: string;
+  evidence_last_reviewed: string;
   outcome_source_2_url?: string;
   outcome_source_2_title?: string;
   legacy_methodology_notes?: string;
@@ -51,6 +81,29 @@ export type Claim = {
   legacy_weighted_reliability_score?: string;
   legacy_included_in_site_percentage?: string;
 };
+
+export type ClaimIndexRecord = Pick<
+  Claim,
+  | "record_id"
+  | "statement_date"
+  | "organization_or_domain"
+  | "relationship_to_organization"
+  | "primary_domain"
+  | "public_discourse_category"
+  | "topic"
+  | "claim_type"
+  | "assertion_mode"
+  | "statement_paraphrase"
+  | "verdict_category"
+  | "display_verdict"
+  | "include_in_trust_score"
+  | "score_points"
+  | "outcome_summary"
+  | "correction_status"
+  | "sensitive_topic_tags"
+  | "intentional_deception_established"
+  | "deception_intent_status"
+>;
 
 export type SummaryRow = {
   section: string;
@@ -77,6 +130,17 @@ export type ClassificationRule = {
   implementation_rule: string;
 };
 
+export type ClassificationEntry = {
+  section: string;
+  key: string;
+  display_label: string;
+  score_or_value: string;
+  include_in_trust_score: string;
+  definition: string;
+  calculation_or_rule: string;
+  notes: string;
+};
+
 export type MigrationRow = {
   [key: string]: string;
   record_id: string;
@@ -86,9 +150,12 @@ export type MigrationRow = {
 export type DownloadRole =
   | "claims"
   | "summary"
+  | "evaluationAudit"
+  | "sourceAudit"
   | "methodology"
   | "classificationKey"
-  | "migration";
+  | "migration"
+  | "datasetReadme";
 
 export type DatasetDownload = {
   role: DownloadRole;
@@ -104,6 +171,7 @@ type DatasetMeta = {
   sourceVersionLabel: string;
   migrationLabel: string;
   evaluationDate: string;
+  evaluationSchemaVersion: string;
   fieldCount: number;
   totalRecords: number;
   scoredClaims: number;
@@ -119,12 +187,30 @@ type DatasetMeta = {
   excludedVerdictCount: number;
   citationCount: number;
   uniqueSourceCount: number;
+  undatedClaimCount: number;
   subjectCategoryCount: number;
-  relatedEntityCount: number;
-  publicDiscourseTopicClaimCount: number;
-  publicDiscourseCategoryCount: number;
+  organizationContextCount: number;
+  topicCategoryClaimCount: number;
+  topicCategoryCount: number;
+  intentAnswerCounts: Record<string, number>;
+  intentAssessmentCounts: Record<string, number>;
+  auditMetricCount: number;
+  evaluationAuditRecordCount: number;
+  sourceAuditRecordCount: number;
+  averageEvidenceStrength: number;
+  averageVerdictConfidence: number;
+  rowsWithTwoSources: number;
+  rowsWithTwoIndependentDomains: number;
+  completeAuditClaims: number;
   sourceFiles: Record<DownloadRole, string>;
   downloads: DatasetDownload[];
+};
+
+export type RatingBand = {
+  minimum: number;
+  maximum: number;
+  range: string;
+  label: string;
 };
 
 type Dataset = {
@@ -132,7 +218,8 @@ type Dataset = {
   claims: Claim[];
   summary: SummaryRow[];
   classificationKey: ClassificationRule[];
-  classificationEntries: Record<string, string>[];
+  classificationEntries: ClassificationEntry[];
+  ratingBands: RatingBand[];
   migration: MigrationRow[];
 };
 
@@ -142,6 +229,7 @@ export const claims = dataset.claims;
 export const summary = dataset.summary;
 export const classificationKey = dataset.classificationKey;
 export const classificationEntries = dataset.classificationEntries;
+export const ratingBands = dataset.ratingBands;
 export const migration = dataset.migration;
 export const datasetDownloads = dataset.meta.downloads;
 export const downloadByRole = Object.fromEntries(
@@ -171,6 +259,29 @@ export const datasetStats = {
   ).size,
 };
 
+export const claimIndexRecords: ClaimIndexRecord[] = claims.map((claim) => ({
+  record_id: claim.record_id,
+  statement_date: claim.statement_date,
+  organization_or_domain: claim.organization_or_domain,
+  relationship_to_organization: claim.relationship_to_organization,
+  primary_domain: claim.primary_domain,
+  public_discourse_category: claim.public_discourse_category,
+  topic: claim.topic,
+  claim_type: claim.claim_type,
+  assertion_mode: claim.assertion_mode,
+  statement_paraphrase: claim.statement_paraphrase,
+  verdict_category: claim.verdict_category,
+  display_verdict: claim.display_verdict,
+  include_in_trust_score: claim.include_in_trust_score,
+  score_points: claim.score_points,
+  outcome_summary: claim.outcome_summary,
+  correction_status: claim.correction_status,
+  sensitive_topic_tags: claim.sensitive_topic_tags,
+  intentional_deception_established:
+    claim.intentional_deception_established,
+  deception_intent_status: claim.deception_intent_status,
+}));
+
 export const verdictLabels: Record<string, string> = Object.fromEntries(
   classificationKey.map((rule) => [rule.classification, rule.classification]),
 );
@@ -198,6 +309,13 @@ export function verdictTone(verdict: string) {
   if (ratio === 0) return "negative";
   return "mixed";
 }
+
+export const verdictToneByName = Object.fromEntries(
+  classificationKey.map((rule) => [
+    rule.classification,
+    verdictTone(rule.classification),
+  ]),
+) as Record<string, ReturnType<typeof verdictTone>>;
 
 const tonePalettes = {
   positive: ["#2d6651", "#66917f", "#8cab9d"],
@@ -311,7 +429,8 @@ const yearlyTrendMap = new Map<
 >();
 
 for (const claim of claims) {
-  const year = claim.statement_date.slice(0, 4);
+  const year = claim.statement_date.match(/^(\d{4})/)?.[1];
+  if (!year) continue;
   const entry = yearlyTrendMap.get(year) ?? {
     year,
     total: 0,
@@ -472,43 +591,76 @@ export const scoreGroups = scoredRules.map((rule, index) => ({
   published: Number(rule.score_points),
 }));
 
-export const ratingBands = summary
-  .filter(
-    (row) =>
-      row.section === "Rating scale" && row.metric === "Trust Score band",
-  )
-  .map((row) => {
-    const [minimum, maximum] = row.formula_or_rule
-      .match(/\d+(?:\.\d+)?/g)
-      ?.map(Number) ?? [0, 0];
-    return {
-      minimum,
-      maximum,
-      range: `${minimum}–${maximum}`,
-      label: row.group,
-    };
-  })
-  .sort((left, right) => right.minimum - left.minimum);
-
 export const subjectCategoryNames = [
   ...new Set(claims.map((claim) => claim.primary_domain)),
 ].sort();
 
-export const relatedEntityNames = [
+export const organizationContextNames = [
   ...new Set(
     claims
-      .map((claim) => claim.related_entity)
-      .filter((entity): entity is string => Boolean(entity)),
+      .map((claim) => claim.organization_or_domain)
+      .filter((context): context is string => Boolean(context)),
   ),
 ].sort();
 
-export const publicDiscourseCategoryNames = [
+export const topicCategoryNames = [
   ...new Set(
     claims
       .map((claim) => claim.public_discourse_category)
       .filter((category): category is string => Boolean(category)),
   ),
 ].sort();
+
+export type DistributionEntry = {
+  label: string;
+  count: number;
+};
+
+function distributionFromCounts(
+  counts: Record<string, number>,
+): DistributionEntry[] {
+  return Object.entries(counts).map(([label, count]) => ({ label, count }));
+}
+
+export const intentAnswerDistribution = distributionFromCounts(
+  datasetStats.intentAnswerCounts,
+);
+
+export const intentAssessmentDistribution = distributionFromCounts(
+  datasetStats.intentAssessmentCounts,
+);
+
+const evidenceMetricLabels: Record<string, string> = {
+  statement_evidence_quality_score: "Statement evidence quality",
+  outcome_evidence_quality_score: "Outcome evidence quality",
+  corroboration_score: "Independent corroboration",
+  directness_score: "Evidence directness",
+  evidence_strength_score: "Evidence strength",
+  verdict_confidence_score: "Verdict confidence",
+};
+
+export const evidenceMetricDefinitions = classificationEntries
+  .filter((entry) => entry.section === "Evidence metric")
+  .map((entry) => ({
+    field: entry.key,
+    label:
+      evidenceMetricLabels[entry.key] ??
+      entry.display_label
+        .replaceAll("_", " ")
+        .replace(/\b\w/g, (character) => character.toUpperCase()),
+    maximum: Number(entry.score_or_value),
+    definition: entry.definition,
+    rule: entry.calculation_or_rule,
+    notes: entry.notes,
+  }));
+
+export const intentStatusDefinitions = classificationEntries
+  .filter((entry) => entry.section === "Intent status")
+  .map((entry) => ({
+    status: entry.key,
+    label: entry.display_label,
+    definition: entry.definition,
+  }));
 
 export const claimTypeNames = [
   ...new Set(claims.map((claim) => claim.claim_type)),
