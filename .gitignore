@@ -15,8 +15,12 @@
 
 # next.js
 /.next/
-/.vinext/
 /out/
+
+# generated output from the previous vinext/Cloudflare setup
+/.vinext/
+/.wrangler/
+/dist/
 
 # misc
 .DS_Store
@@ -36,7 +40,3 @@ yarn-error.log*
 
 # typescript
 next-env.d.ts
-/dist/
-/.wrangler/
-/outputs/
-/work/

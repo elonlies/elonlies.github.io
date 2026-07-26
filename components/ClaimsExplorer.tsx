@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import {
   claimScore,
   claimTypeGroup,
@@ -13,14 +13,6 @@ import {
 
 type ClaimsExplorerProps = {
   claims: Claim[];
-  initialFilters?: {
-    search?: string;
-    organization?: string;
-    verdict?: string;
-    type?: string;
-    scope?: string;
-    sort?: string;
-  };
 };
 
 const scopeOptions = [
@@ -37,10 +29,7 @@ const sortOptions = [
   { value: "organization", label: "Organization" },
 ];
 
-export function ClaimsExplorer({
-  claims,
-  initialFilters = {},
-}: ClaimsExplorerProps) {
+export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
   const organizations = useMemo(
     () =>
       [...new Set(claims.map((claim) => claim.organization_or_domain))].sort(),
@@ -55,16 +44,31 @@ export function ClaimsExplorer({
     [claims],
   );
 
-  const [search, setSearch] = useState(initialFilters.search ?? "");
-  const [organization, setOrganization] = useState(
-    initialFilters.organization ?? "all",
-  );
-  const [verdict, setVerdict] = useState(initialFilters.verdict ?? "all");
-  const [type, setType] = useState(initialFilters.type ?? "all");
-  const [scope, setScope] = useState(initialFilters.scope ?? "all");
-  const [sort, setSort] = useState(initialFilters.sort ?? "oldest");
+  const [search, setSearch] = useState("");
+  const [organization, setOrganization] = useState("all");
+  const [verdict, setVerdict] = useState("all");
+  const [type, setType] = useState("all");
+  const [scope, setScope] = useState("all");
+  const [sort, setSort] = useState("oldest");
+  const queryReady = useRef(false);
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      const params = new URLSearchParams(window.location.search);
+      setSearch(params.get("q") ?? "");
+      setOrganization(params.get("org") ?? "all");
+      setVerdict(params.get("verdict") ?? "all");
+      setType(params.get("type") ?? "all");
+      setScope(params.get("scope") ?? "all");
+      setSort(params.get("sort") ?? "oldest");
+      queryReady.current = true;
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    if (!queryReady.current) return;
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (organization !== "all") params.set("org", organization);

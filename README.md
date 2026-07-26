@@ -40,9 +40,9 @@ Open [http://localhost:3000](http://localhost:3000).
 npm test
 ```
 
-This regenerates the JSON data from the checked-in CSV sources, builds the site,
-then verifies the homepage, score page, a representative claim page, and core
-dataset invariants.
+This regenerates the JSON data from the checked-in CSV sources, creates the
+static GitHub Pages export, then verifies the homepage, score page, all 100 claim
+routes, public downloads, social metadata, and core dataset invariants.
 
 ## Data workflow
 
@@ -66,22 +66,32 @@ The importer also keeps matching visitor downloads under `public/downloads/`
 in sync. When updating the corpus, change `source-data/`, preserve all existing
 record IDs, rerun the importer, and document corrections in version control.
 
-## Hosting
+## GitHub Pages deployment
 
-The app uses React, TypeScript, Next-compatible routing, vinext, and a
-Cloudflare Worker-compatible build.
+The app uses React, TypeScript, and Next.js static export. It does not require a
+server at runtime.
 
 ```bash
 npm run build
 ```
 
-The deployment output is written to `dist/`. It is suitable for a
-Cloudflare-compatible worker host. The project can also be connected to a Git
-host and built by a platform that supports Next/vinext applications.
+The deployable site is written to `out/`. To preview that exact output locally:
 
-This is not a plain static GitHub Pages bundle; uploading the repository to
-GitHub is supported, but GitHub Pages itself would require a separate static
-export adaptation.
+```bash
+npm start
+```
+
+The workflow at `.github/workflows/deploy-pages.yml` builds and publishes `out/`
+whenever `main` is pushed.
+
+One repository setting is required:
+
+1. Open **Settings → Pages** on GitHub.
+2. Under **Build and deployment**, set **Source** to **GitHub Actions**.
+3. Push `main`, or run **Deploy GitHub Pages** manually from the Actions tab.
+
+If the public URL displays this README, Pages is still using the legacy
+“Deploy from a branch” source instead of the GitHub Actions workflow.
 
 ## Editorial note
 

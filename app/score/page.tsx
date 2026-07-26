@@ -12,17 +12,7 @@ export const metadata: Metadata = {
     "The calculation, organization breakdowns, outcome distribution, alternative-weight calculator, and all 100 evidence records.",
 };
 
-type ScorePageProps = {
-  searchParams: Promise<Record<string, string | string[] | undefined>>;
-};
-
-function firstValue(value: string | string[] | undefined) {
-  return Array.isArray(value) ? value[0] : value;
-}
-
-export default async function ScorePage({ searchParams }: ScorePageProps) {
-  const params = await searchParams;
-
+export default function ScorePage() {
   return (
     <main id="main-content">
       <section className="detail-hero detail-hero--score">
@@ -165,17 +155,7 @@ export default async function ScorePage({ searchParams }: ScorePageProps) {
             measured outcome, scoring contribution, confidence, and intent status.
           </p>
         </div>
-        <ClaimsExplorer
-          claims={claims}
-          initialFilters={{
-            search: firstValue(params.q),
-            organization: firstValue(params.org),
-            verdict: firstValue(params.verdict),
-            type: firstValue(params.type),
-            scope: firstValue(params.scope),
-            sort: firstValue(params.sort),
-          }}
-        />
+        <ClaimsExplorer claims={claims} />
       </section>
 
       <section className="section section--download">
