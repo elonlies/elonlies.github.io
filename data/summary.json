@@ -1,0 +1,342 @@
+[
+  {
+    "section": "Dataset",
+    "metric": "Total verified records",
+    "organization_or_domain": "All",
+    "numerator": "100",
+    "denominator": "",
+    "percentage": "",
+    "source_or_formula": "Count of main CSV rows",
+    "interpretation_and_caveat": "This is a substantial, source-backed seed corpus, not literally every utterance Musk has ever made."
+  },
+  {
+    "section": "Dataset",
+    "metric": "Rows included in site percentages",
+    "organization_or_domain": "All",
+    "numerator": "81",
+    "denominator": "100",
+    "percentage": "81.0",
+    "source_or_formula": "included_in_site_percentage = Yes",
+    "interpretation_and_caveat": "Pending, unclear, vague, conditional and mixed-scope claims are excluded from headline denominators."
+  },
+  {
+    "section": "Overall",
+    "metric": "Resolved binary accuracy or eventual-fulfillment rate",
+    "organization_or_domain": "All",
+    "numerator": "34.0",
+    "denominator": "79",
+    "percentage": "43.0",
+    "source_or_formula": "Mean of binary_resolved_score",
+    "interpretation_and_caveat": "Combines factual claims with eventually fulfilled promises. It is a reliability proxy, not proof of subjective honesty or deceptive intent."
+  },
+  {
+    "section": "Overall",
+    "metric": "Factual-claim accuracy rate",
+    "organization_or_domain": "All",
+    "numerator": "1.0",
+    "denominator": "14",
+    "percentage": "7.1",
+    "source_or_formula": "Resolved factual assertions and capability claims",
+    "interpretation_and_caveat": "Highly sensitive to selection. The PolitiFact subset contains disputed claims chosen for fact-checking, not a random sample of all statements."
+  },
+  {
+    "section": "Overall",
+    "metric": "Promise eventual-fulfillment rate",
+    "organization_or_domain": "All",
+    "numerator": "33.0",
+    "denominator": "65",
+    "percentage": "50.8",
+    "source_or_formula": "Resolved non-factual commitments",
+    "interpretation_and_caveat": "Counts a promise fulfilled years late as eventually fulfilled; use the on-time rate to assess deadline reliability."
+  },
+  {
+    "section": "Overall",
+    "metric": "Dated-promise on-time rate",
+    "organization_or_domain": "All",
+    "numerator": "8.0",
+    "denominator": "60",
+    "percentage": "13.3",
+    "source_or_formula": "Mean of on_time_score for rows with a score",
+    "interpretation_and_caveat": "A late success scores 0 here even when it eventually happened."
+  },
+  {
+    "section": "Overall",
+    "metric": "Weighted reliability score",
+    "organization_or_domain": "All",
+    "numerator": "26.5",
+    "denominator": "81",
+    "percentage": "32.7",
+    "source_or_formula": "Mean of weighted_reliability_score",
+    "interpretation_and_caveat": "Weights on-time/accurate as 1, modest lateness or partial delivery between 0 and 1, and false/unfulfilled as 0. Weights are editorial and should be published."
+  },
+  {
+    "section": "By organization",
+    "metric": "Weighted reliability score",
+    "organization_or_domain": "Neuralink",
+    "numerator": "3.25",
+    "denominator": "5",
+    "percentage": "65.0",
+    "source_or_formula": "Mean of weighted_reliability_score",
+    "interpretation_and_caveat": "Only resolved, included records in this curated corpus."
+  },
+  {
+    "section": "By organization",
+    "metric": "Dated-promise on-time rate",
+    "organization_or_domain": "Neuralink",
+    "numerator": "0.0",
+    "denominator": "4",
+    "percentage": "0.0",
+    "source_or_formula": "Mean of on_time_score",
+    "interpretation_and_caveat": "Only records with an explicit, scoreable deadline."
+  },
+  {
+    "section": "By organization",
+    "metric": "Weighted reliability score",
+    "organization_or_domain": "Public discourse",
+    "numerator": "0.0",
+    "denominator": "10",
+    "percentage": "0.0",
+    "source_or_formula": "Mean of weighted_reliability_score",
+    "interpretation_and_caveat": "Only resolved, included records in this curated corpus."
+  },
+  {
+    "section": "By organization",
+    "metric": "Weighted reliability score",
+    "organization_or_domain": "SpaceX",
+    "numerator": "4.0",
+    "denominator": "9",
+    "percentage": "44.4",
+    "source_or_formula": "Mean of weighted_reliability_score",
+    "interpretation_and_caveat": "Only resolved, included records in this curated corpus."
+  },
+  {
+    "section": "By organization",
+    "metric": "Dated-promise on-time rate",
+    "organization_or_domain": "SpaceX",
+    "numerator": "0.0",
+    "denominator": "9",
+    "percentage": "0.0",
+    "source_or_formula": "Mean of on_time_score",
+    "interpretation_and_caveat": "Only records with an explicit, scoreable deadline."
+  },
+  {
+    "section": "By organization",
+    "metric": "Weighted reliability score",
+    "organization_or_domain": "Tesla",
+    "numerator": "15.75",
+    "denominator": "46",
+    "percentage": "34.2",
+    "source_or_formula": "Mean of weighted_reliability_score",
+    "interpretation_and_caveat": "Only resolved, included records in this curated corpus."
+  },
+  {
+    "section": "By organization",
+    "metric": "Dated-promise on-time rate",
+    "organization_or_domain": "Tesla",
+    "numerator": "7.0",
+    "denominator": "39",
+    "percentage": "17.9",
+    "source_or_formula": "Mean of on_time_score",
+    "interpretation_and_caveat": "Only records with an explicit, scoreable deadline."
+  },
+  {
+    "section": "By organization",
+    "metric": "Weighted reliability score",
+    "organization_or_domain": "The Boring Company",
+    "numerator": "0.75",
+    "denominator": "5",
+    "percentage": "15.0",
+    "source_or_formula": "Mean of weighted_reliability_score",
+    "interpretation_and_caveat": "Only resolved, included records in this curated corpus."
+  },
+  {
+    "section": "By organization",
+    "metric": "Dated-promise on-time rate",
+    "organization_or_domain": "The Boring Company",
+    "numerator": "0.0",
+    "denominator": "4",
+    "percentage": "0.0",
+    "source_or_formula": "Mean of on_time_score",
+    "interpretation_and_caveat": "Only records with an explicit, scoreable deadline."
+  },
+  {
+    "section": "By organization",
+    "metric": "Weighted reliability score",
+    "organization_or_domain": "X / Twitter",
+    "numerator": "2.75",
+    "denominator": "6",
+    "percentage": "45.8",
+    "source_or_formula": "Mean of weighted_reliability_score",
+    "interpretation_and_caveat": "Only resolved, included records in this curated corpus."
+  },
+  {
+    "section": "By organization",
+    "metric": "Dated-promise on-time rate",
+    "organization_or_domain": "X / Twitter",
+    "numerator": "1.0",
+    "denominator": "4",
+    "percentage": "25.0",
+    "source_or_formula": "Mean of on_time_score",
+    "interpretation_and_caveat": "Only records with an explicit, scoreable deadline."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "FALSE",
+    "numerator": "10",
+    "denominator": "100",
+    "percentage": "10.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "FALSE_OR_UNSUPPORTED",
+    "numerator": "3",
+    "denominator": "100",
+    "percentage": "3.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "FULFILLED",
+    "numerator": "6",
+    "denominator": "100",
+    "percentage": "6.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "FULFILLED_LATE",
+    "numerator": "21",
+    "denominator": "100",
+    "percentage": "21.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "FULFILLED_ON_TIME",
+    "numerator": "7",
+    "denominator": "100",
+    "percentage": "7.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "NOT_FULFILLED",
+    "numerator": "31",
+    "denominator": "100",
+    "percentage": "31.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "PARTIALLY_FULFILLED",
+    "numerator": "7",
+    "denominator": "100",
+    "percentage": "7.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "PENDING",
+    "numerator": "11",
+    "denominator": "100",
+    "percentage": "11.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "PROMISE_REVERSED",
+    "numerator": "1",
+    "denominator": "100",
+    "percentage": "1.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "UNCLEAR",
+    "numerator": "2",
+    "denominator": "100",
+    "percentage": "2.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "Distribution",
+    "metric": "Verdict count",
+    "organization_or_domain": "UNSCORABLE",
+    "numerator": "1",
+    "denominator": "100",
+    "percentage": "1.0",
+    "source_or_formula": "Count by verdict",
+    "interpretation_and_caveat": "Includes pending and unscorable records."
+  },
+  {
+    "section": "External benchmark",
+    "metric": "NYT achieved on time",
+    "organization_or_domain": "Musk business goals",
+    "numerator": "19",
+    "denominator": "100",
+    "percentage": "19.0",
+    "source_or_formula": "https://www.nytimes.com/interactive/2026/06/02/technology/elon-musk-promises-spacex-ipo.html",
+    "interpretation_and_caveat": "The Times audited 602 future-deadline business goals from 69,000 social posts and 19 Tesla calls; its scope differs from this CSV."
+  },
+  {
+    "section": "External benchmark",
+    "metric": "NYT late or unfulfilled",
+    "organization_or_domain": "Musk business goals",
+    "numerator": "35",
+    "denominator": "100",
+    "percentage": "35.0",
+    "source_or_formula": "https://www.nytimes.com/interactive/2026/06/02/technology/elon-musk-promises-spacex-ipo.html",
+    "interpretation_and_caveat": "Aggregate published percentage; late and unfulfilled were grouped in the article summary."
+  },
+  {
+    "section": "External benchmark",
+    "metric": "NYT unclear or no public update",
+    "organization_or_domain": "Musk business goals",
+    "numerator": "33",
+    "denominator": "100",
+    "percentage": "33.0",
+    "source_or_formula": "https://www.nytimes.com/interactive/2026/06/02/technology/elon-musk-promises-spacex-ipo.html",
+    "interpretation_and_caveat": "These should not be forced into true/false scoring."
+  },
+  {
+    "section": "External benchmark",
+    "metric": "NYT future-dated",
+    "organization_or_domain": "Musk business goals",
+    "numerator": "13",
+    "denominator": "100",
+    "percentage": "13.0",
+    "source_or_formula": "https://www.nytimes.com/interactive/2026/06/02/technology/elon-musk-promises-spacex-ipo.html",
+    "interpretation_and_caveat": "Future promises should remain pending."
+  },
+  {
+    "section": "External benchmark",
+    "metric": "PolitiFact current factual checks rated false or Pants on Fire",
+    "organization_or_domain": "Public discourse",
+    "numerator": "10",
+    "denominator": "10",
+    "percentage": "100.0",
+    "source_or_formula": "https://politifact.com/personalities/elon-musk/",
+    "interpretation_and_caveat": "Complete current speaker-profile factual-check set as of July 26, 2026, but fact-check selection creates severe adverse-selection bias."
+  }
+]

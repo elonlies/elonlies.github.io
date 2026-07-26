@@ -1,0 +1,35 @@
+﻿section,metric,organization_or_domain,numerator,denominator,percentage,source_or_formula,interpretation_and_caveat
+Dataset,Total verified records,All,100,,,Count of main CSV rows,"This is a substantial, source-backed seed corpus, not literally every utterance Musk has ever made."
+Dataset,Rows included in site percentages,All,81,100,81.0,included_in_site_percentage = Yes,"Pending, unclear, vague, conditional and mixed-scope claims are excluded from headline denominators."
+Overall,Resolved binary accuracy or eventual-fulfillment rate,All,34.0,79,43.0,Mean of binary_resolved_score,"Combines factual claims with eventually fulfilled promises. It is a reliability proxy, not proof of subjective honesty or deceptive intent."
+Overall,Factual-claim accuracy rate,All,1.0,14,7.1,Resolved factual assertions and capability claims,"Highly sensitive to selection. The PolitiFact subset contains disputed claims chosen for fact-checking, not a random sample of all statements."
+Overall,Promise eventual-fulfillment rate,All,33.0,65,50.8,Resolved non-factual commitments,Counts a promise fulfilled years late as eventually fulfilled; use the on-time rate to assess deadline reliability.
+Overall,Dated-promise on-time rate,All,8.0,60,13.3,Mean of on_time_score for rows with a score,A late success scores 0 here even when it eventually happened.
+Overall,Weighted reliability score,All,26.5,81,32.7,Mean of weighted_reliability_score,"Weights on-time/accurate as 1, modest lateness or partial delivery between 0 and 1, and false/unfulfilled as 0. Weights are editorial and should be published."
+By organization,Weighted reliability score,Neuralink,3.25,5,65.0,Mean of weighted_reliability_score,"Only resolved, included records in this curated corpus."
+By organization,Dated-promise on-time rate,Neuralink,0.0,4,0.0,Mean of on_time_score,"Only records with an explicit, scoreable deadline."
+By organization,Weighted reliability score,Public discourse,0.0,10,0.0,Mean of weighted_reliability_score,"Only resolved, included records in this curated corpus."
+By organization,Weighted reliability score,SpaceX,4.0,9,44.4,Mean of weighted_reliability_score,"Only resolved, included records in this curated corpus."
+By organization,Dated-promise on-time rate,SpaceX,0.0,9,0.0,Mean of on_time_score,"Only records with an explicit, scoreable deadline."
+By organization,Weighted reliability score,Tesla,15.75,46,34.2,Mean of weighted_reliability_score,"Only resolved, included records in this curated corpus."
+By organization,Dated-promise on-time rate,Tesla,7.0,39,17.9,Mean of on_time_score,"Only records with an explicit, scoreable deadline."
+By organization,Weighted reliability score,The Boring Company,0.75,5,15.0,Mean of weighted_reliability_score,"Only resolved, included records in this curated corpus."
+By organization,Dated-promise on-time rate,The Boring Company,0.0,4,0.0,Mean of on_time_score,"Only records with an explicit, scoreable deadline."
+By organization,Weighted reliability score,X / Twitter,2.75,6,45.8,Mean of weighted_reliability_score,"Only resolved, included records in this curated corpus."
+By organization,Dated-promise on-time rate,X / Twitter,1.0,4,25.0,Mean of on_time_score,"Only records with an explicit, scoreable deadline."
+Distribution,Verdict count,FALSE,10,100,10.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,FALSE_OR_UNSUPPORTED,3,100,3.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,FULFILLED,6,100,6.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,FULFILLED_LATE,21,100,21.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,FULFILLED_ON_TIME,7,100,7.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,NOT_FULFILLED,31,100,31.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,PARTIALLY_FULFILLED,7,100,7.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,PENDING,11,100,11.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,PROMISE_REVERSED,1,100,1.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,UNCLEAR,2,100,2.0,Count by verdict,Includes pending and unscorable records.
+Distribution,Verdict count,UNSCORABLE,1,100,1.0,Count by verdict,Includes pending and unscorable records.
+External benchmark,NYT achieved on time,Musk business goals,19,100,19.0,https://www.nytimes.com/interactive/2026/06/02/technology/elon-musk-promises-spacex-ipo.html,"The Times audited 602 future-deadline business goals from 69,000 social posts and 19 Tesla calls; its scope differs from this CSV."
+External benchmark,NYT late or unfulfilled,Musk business goals,35,100,35.0,https://www.nytimes.com/interactive/2026/06/02/technology/elon-musk-promises-spacex-ipo.html,Aggregate published percentage; late and unfulfilled were grouped in the article summary.
+External benchmark,NYT unclear or no public update,Musk business goals,33,100,33.0,https://www.nytimes.com/interactive/2026/06/02/technology/elon-musk-promises-spacex-ipo.html,These should not be forced into true/false scoring.
+External benchmark,NYT future-dated,Musk business goals,13,100,13.0,https://www.nytimes.com/interactive/2026/06/02/technology/elon-musk-promises-spacex-ipo.html,Future promises should remain pending.
+External benchmark,PolitiFact current factual checks rated false or Pants on Fire,Public discourse,10,10,100.0,https://politifact.com/personalities/elon-musk/,"Complete current speaker-profile factual-check set as of July 26, 2026, but fact-check selection creates severe adverse-selection bias."
