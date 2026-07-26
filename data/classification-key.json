@@ -1,0 +1,58 @@
+[
+  {
+    "classification": "True",
+    "score_points": "100",
+    "included_in_score": "Yes",
+    "definition": "The central factual claim is supported, or the commitment was fulfilled materially as stated and on time.",
+    "promise_or_commitment_display": "Fulfilled",
+    "prediction_or_forecast_display": "Correct"
+  },
+  {
+    "classification": "Mostly True",
+    "score_points": "75",
+    "included_in_score": "Yes",
+    "definition": "The central claim held up, with a limited error, qualification, delay, or scope deviation.",
+    "promise_or_commitment_display": "Substantially Fulfilled",
+    "prediction_or_forecast_display": "Mostly Correct"
+  },
+  {
+    "classification": "Misleading",
+    "score_points": "50",
+    "included_in_score": "Yes",
+    "definition": "Some material part held up, but missing context, scope, capability, or deadline performance substantially changed the reasonable takeaway.",
+    "promise_or_commitment_display": "Partially Fulfilled or Fulfilled Late",
+    "prediction_or_forecast_display": "Mixed or Materially Late"
+  },
+  {
+    "classification": "Unsupported",
+    "score_points": "25",
+    "included_in_score": "Yes",
+    "definition": "The claim was presented affirmatively but adequate credible support was not available; the record did not justify a definitive False verdict.",
+    "promise_or_commitment_display": "Unsupported",
+    "prediction_or_forecast_display": "Unsupported"
+  },
+  {
+    "classification": "False",
+    "score_points": "0",
+    "included_in_score": "Yes",
+    "definition": "Reliable evidence contradicted the central claim, or a mature measurable commitment was unfulfilled or reversed.",
+    "promise_or_commitment_display": "Unfulfilled or Reversed",
+    "prediction_or_forecast_display": "Incorrect"
+  },
+  {
+    "classification": "Unresolved",
+    "score_points": "",
+    "included_in_score": "No",
+    "definition": "Credible evidence remained insufficient or materially conflicted, or the statement lacked an objective success threshold.",
+    "promise_or_commitment_display": "Unresolved",
+    "prediction_or_forecast_display": "Unresolved"
+  },
+  {
+    "classification": "Pending",
+    "score_points": "",
+    "included_in_score": "No",
+    "definition": "The relevant deadline or explicit condition had not matured by the evaluation date.",
+    "promise_or_commitment_display": "Pending",
+    "prediction_or_forecast_display": "Pending"
+  }
+]

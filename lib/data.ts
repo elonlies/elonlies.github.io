@@ -1,25 +1,32 @@
 import rawClaims from "@/data/claims.json";
+import rawClassificationKey from "@/data/classification-key.json";
 import rawSummary from "@/data/summary.json";
 
 export type Claim = {
   record_id: string;
+  schema_version: string;
   statement_date: string;
   organization_or_domain: string;
+  primary_domain: string;
   topic: string;
-  statement_type: string;
+  claim_type: string;
   statement_paraphrase: string;
   target_date_or_timeframe: string;
   statement_source_url: string;
   statement_source_title: string;
   statement_source_tier: string;
   evaluation_date: string;
-  verdict: string;
+  verdict_category: string;
+  display_verdict: string;
+  score_points: string;
+  include_in_trust_score: string;
+  exclusion_reason: string;
+  classification_rationale: string;
+  credible_sources_contest_claim: string;
+  contestation_resolution: string;
   deadline_result: string;
-  eventual_fulfillment: string;
+  eventual_outcome: string;
   factual_accuracy: string;
-  binary_resolved_score: string;
-  on_time_score: string;
-  weighted_reliability_score: string;
   deception_intent_status: string;
   outcome_summary: string;
   outcome_source_1_url: string;
@@ -27,123 +34,307 @@ export type Claim = {
   outcome_source_2_url: string;
   outcome_source_2_title: string;
   confidence: string;
-  included_in_site_percentage: string;
   selection_basis: string;
   source_quality_notes: string;
   methodology_notes: string;
+  legacy_methodology_notes: string;
+  legacy_statement_type: string;
+  legacy_verdict: string;
+  legacy_weighted_reliability_score: string;
+  legacy_included_in_site_percentage: string;
 };
 
 export type SummaryRow = {
   section: string;
   metric: string;
-  organization_or_domain: string;
-  numerator: string;
-  denominator: string;
-  percentage: string;
-  source_or_formula: string;
+  group: string;
+  count: string;
+  total_records: string;
+  points_earned: string;
+  points_possible: string;
+  percentage_or_score: string;
+  conclusion: string;
+  formula_or_rule: string;
   interpretation_and_caveat: string;
+};
+
+export type ClassificationRule = {
+  classification: string;
+  score_points: string;
+  included_in_score: string;
+  definition: string;
+  promise_or_commitment_display: string;
+  prediction_or_forecast_display: string;
 };
 
 export const claims = rawClaims as Claim[];
 export const summary = rawSummary as SummaryRow[];
+export const classificationKey = rawClassificationKey as ClassificationRule[];
 
-export const verdictLabels: Record<string, string> = {
-  FALSE: "False",
-  FALSE_OR_UNSUPPORTED: "False or unsupported",
-  FULFILLED: "Fulfilled",
-  FULFILLED_LATE: "Fulfilled late",
-  FULFILLED_ON_TIME: "Fulfilled on time",
-  NOT_FULFILLED: "Not fulfilled",
-  PARTIALLY_FULFILLED: "Partially fulfilled",
-  PENDING: "Pending",
-  PROMISE_REVERSED: "Promise reversed",
-  UNCLEAR: "Unclear",
-  UNSCORABLE: "Unscorable",
+const scoredClaims = claims.filter(
+  (claim) => claim.include_in_trust_score === "Yes",
+);
+const pointsEarned = scoredClaims.reduce(
+  (total, claim) => total + Number(claim.score_points),
+  0,
+);
+const pointsPossible = scoredClaims.length * 100;
+const exactScore = Number(((pointsEarned / pointsPossible) * 100).toFixed(1));
+const overallSummary = summary.find(
+  (row) =>
+    row.section === "Overall" && row.metric === "Elon Musk Trust Score",
+);
+
+export const datasetStats = {
+  version: "2.0",
+  evaluationDate: claims
+    .map((claim) => claim.evaluation_date)
+    .sort()
+    .at(-1) ?? "2026-07-26",
+  totalRecords: claims.length,
+  scoredClaims: scoredClaims.length,
+  excludedClaims: claims.length - scoredClaims.length,
+  pointsEarned,
+  pointsPossible,
+  exactScore,
+  roundedScore: Math.round(exactScore),
+  conclusion: overallSummary?.conclusion ?? "Not Trustworthy",
+  highConfidenceClaims: claims.filter((claim) => claim.confidence === "High")
+    .length,
+  contestedClaims: claims.filter(
+    (claim) => claim.credible_sources_contest_claim === "Yes",
+  ).length,
 };
 
-export const verdictDescriptions: Record<string, string> = {
-  FULFILLED_ON_TIME: "The promised result happened within the stated deadline.",
-  FULFILLED: "The result happened and no explicit deadline was missed.",
-  FULFILLED_LATE: "The result happened, but after the stated deadline.",
-  PARTIALLY_FULFILLED:
-    "A meaningful part happened, but material scope remained unmet or unverifiable.",
-  NOT_FULFILLED: "A mature promise or forecast did not happen.",
-  PROMISE_REVERSED: "Musk later did the opposite of an explicit commitment.",
-  FALSE:
-    "Reliable evidence contradicts the factual assertion.",
-  FALSE_OR_UNSUPPORTED:
-    "Reliable evidence contradicts the assertion or the claimed support was absent.",
-  PENDING: "The deadline has not elapsed.",
-  UNCLEAR:
-    "Public evidence is inadequate or the conditions remain unresolved.",
-  UNSCORABLE:
-    "The statement is too vague for an objective verdict.",
-};
+export const verdictLabels: Record<string, string> = Object.fromEntries(
+  classificationKey.map((rule) => [rule.classification, rule.classification]),
+);
 
-export const organizationScores = [
-  { name: "Neuralink", points: 3.25, count: 5, score: 65.0 },
-  { name: "X / Twitter", points: 2.75, count: 6, score: 45.8 },
-  { name: "SpaceX", points: 4.0, count: 9, score: 44.4 },
-  { name: "Tesla", points: 15.75, count: 46, score: 34.2 },
-  { name: "The Boring Company", points: 0.75, count: 5, score: 15.0 },
-  { name: "Public discourse", points: 0, count: 10, score: 0 },
+export const verdictDescriptions: Record<string, string> = Object.fromEntries(
+  classificationKey.map((rule) => [rule.classification, rule.definition]),
+);
+
+const verdictOrder = [
+  "True",
+  "Mostly True",
+  "Misleading",
+  "Unsupported",
+  "False",
+  "Unresolved",
+  "Pending",
 ];
+
+export const organizationScores = summary
+  .filter(
+    (row) =>
+      row.section === "By organization" &&
+      row.metric === "Trust Score" &&
+      row.percentage_or_score !== "",
+  )
+  .map((row) => ({
+    name: row.group,
+    points: Number(row.points_earned),
+    count: Number(row.count),
+    totalRecords: Number(row.total_records),
+    score: Number(row.percentage_or_score),
+  }))
+  .sort((left, right) => right.score - left.score);
+
+export const domainScores = summary
+  .filter(
+    (row) =>
+      row.section === "By primary domain" &&
+      row.metric === "Trust Score" &&
+      row.percentage_or_score !== "",
+  )
+  .map((row) => ({
+    name: row.group,
+    points: Number(row.points_earned),
+    count: Number(row.count),
+    totalRecords: Number(row.total_records),
+    score: Number(row.percentage_or_score),
+  }))
+  .sort((left, right) => right.score - left.score);
+
+export const claimTypeScores = summary
+  .filter(
+    (row) =>
+      row.section === "By claim type" && row.metric === "Trust Score",
+  )
+  .map((row) => ({
+    name: row.group,
+    points: row.points_earned === "" ? null : Number(row.points_earned),
+    count: Number(row.count),
+    totalRecords: Number(row.total_records),
+    score:
+      row.percentage_or_score === ""
+        ? null
+        : Number(row.percentage_or_score),
+    conclusion: row.conclusion,
+  }));
+
+export type YearlyTrend = {
+  year: string;
+  total: number;
+  scored: number;
+  points: number;
+  score: number | null;
+  falseCount: number;
+  falseShare: number;
+  supportedCount: number;
+  supportedShare: number;
+  excludedCount: number;
+};
+
+const yearlyTrendMap = new Map<
+  string,
+  Omit<YearlyTrend, "score" | "falseShare" | "supportedShare">
+>();
+
+for (const claim of claims) {
+  const year = claim.statement_date.slice(0, 4);
+  const entry = yearlyTrendMap.get(year) ?? {
+    year,
+    total: 0,
+    scored: 0,
+    points: 0,
+    falseCount: 0,
+    supportedCount: 0,
+    excludedCount: 0,
+  };
+
+  entry.total += 1;
+  if (claim.include_in_trust_score === "Yes") {
+    entry.scored += 1;
+    entry.points += Number(claim.score_points);
+  } else {
+    entry.excludedCount += 1;
+  }
+  if (claim.verdict_category === "False") entry.falseCount += 1;
+  if (["True", "Mostly True"].includes(claim.verdict_category)) {
+    entry.supportedCount += 1;
+  }
+
+  yearlyTrendMap.set(year, entry);
+}
+
+export const yearlyTrends: YearlyTrend[] = [...yearlyTrendMap.values()]
+  .sort((left, right) => left.year.localeCompare(right.year))
+  .map((entry) => ({
+    ...entry,
+    score:
+      entry.scored === 0
+        ? null
+        : Number((entry.points / entry.scored).toFixed(1)),
+    falseShare: Number(((entry.falseCount / entry.total) * 100).toFixed(1)),
+    supportedShare: Number(
+      ((entry.supportedCount / entry.total) * 100).toFixed(1),
+    ),
+  }));
+
+function periodScore(startYear: number, endYear: number) {
+  const periodClaims = claims.filter((claim) => {
+    const year = Number(claim.statement_date.slice(0, 4));
+    return (
+      year >= startYear &&
+      year <= endYear &&
+      claim.include_in_trust_score === "Yes"
+    );
+  });
+  const points = periodClaims.reduce(
+    (total, claim) => total + Number(claim.score_points),
+    0,
+  );
+
+  return {
+    label: `${startYear}–${endYear}`,
+    count: periodClaims.length,
+    points,
+    score: Number((points / periodClaims.length).toFixed(1)),
+  };
+}
+
+const earlierTrendWindow = periodScore(2016, 2020);
+const recentTrendWindow = periodScore(2021, 2025);
+
+export const trendComparison = {
+  earlier: earlierTrendWindow,
+  recent: recentTrendWindow,
+  delta: Number(
+    (recentTrendWindow.score - earlierTrendWindow.score).toFixed(1),
+  ),
+};
+
+function countVerdict(verdict: string) {
+  return claims.filter((claim) => claim.verdict_category === verdict).length;
+}
+
+function percent(count: number, total = claims.length) {
+  return `${((count / total) * 100).toFixed(1)}%`;
+}
+
+const supportedClaims =
+  countVerdict("True") + countVerdict("Mostly True");
+const falseClaims = countVerdict("False");
 
 export const supportMetrics = [
   {
-    label: "Resolved accuracy or eventual fulfillment",
-    value: "43.0%",
-    fraction: "34 / 79",
-    note: "Combines resolved factual claims with promises that eventually happened.",
+    label: "Claims included in the Trust Score",
+    value: percent(datasetStats.scoredClaims),
+    fraction: `${datasetStats.scoredClaims} / ${datasetStats.totalRecords}`,
+    note: "Pending and genuinely unresolved claims remain visible but do not alter the denominator.",
   },
   {
-    label: "Promises eventually fulfilled",
-    value: "50.8%",
-    fraction: "33 / 65",
-    note: "Counts resolved promises that happened, including late delivery.",
+    label: "Claims rated True or Mostly True",
+    value: percent(supportedClaims),
+    fraction: `${supportedClaims} / ${datasetStats.totalRecords}`,
+    note: "These records earned full or three-quarter credit under the v2 classification key.",
   },
   {
-    label: "Dated promises completed on time",
-    value: "13.3%",
-    fraction: "8 / 60",
-    note: "A late success still counts as a missed deadline here.",
+    label: "Claims rated False",
+    value: percent(falseClaims),
+    fraction: `${falseClaims} / ${datasetStats.totalRecords}`,
+    note: "False means contradicted, unfulfilled, or reversed; it does not by itself establish intent.",
   },
   {
-    label: "Selected factual claims accurate",
-    value: "7.1%",
-    fraction: "1 / 14",
-    note: "This subset is heavily selection-biased toward disputed statements.",
+    label: "Contested by credible sources",
+    value: percent(datasetStats.contestedClaims),
+    fraction: `${datasetStats.contestedClaims} / ${datasetStats.totalRecords}`,
+    note: "Contestation is a separate evidence badge, not a score-bearing verdict.",
   },
 ];
 
-export const outcomeDistribution = [
-  { key: "NOT_FULFILLED", count: 31 },
-  { key: "FULFILLED_LATE", count: 21 },
-  { key: "PENDING", count: 11 },
-  { key: "FALSE", count: 10 },
-  { key: "FULFILLED_ON_TIME", count: 7 },
-  { key: "PARTIALLY_FULFILLED", count: 7 },
-  { key: "FULFILLED", count: 6 },
-  { key: "FALSE_OR_UNSUPPORTED", count: 3 },
-  { key: "UNCLEAR", count: 2 },
-  { key: "PROMISE_REVERSED", count: 1 },
-  { key: "UNSCORABLE", count: 1 },
-];
+export const outcomeDistribution = verdictOrder.map((key) => ({
+  key,
+  count: countVerdict(key),
+}));
+
+export const scoreGroups = classificationKey
+  .filter((rule) => rule.included_in_score === "Yes")
+  .map((rule) => ({
+    id: rule.classification.toLowerCase().replaceAll(" ", "-"),
+    label: rule.classification,
+    count: countVerdict(rule.classification),
+    published: Number(rule.score_points),
+  }));
 
 export const ratingBands = [
-  { range: "80–100", label: "Highly trustworthy" },
-  { range: "60–79", label: "Generally trustworthy" },
-  { range: "40–59", label: "Inconsistent" },
-  { range: "0–39", label: "Not trustworthy" },
+  { range: "80–100", label: "Highly Trustworthy" },
+  { range: "65–79", label: "Generally Trustworthy" },
+  { range: "45–64", label: "Inconsistent" },
+  { range: "25–44", label: "Not Trustworthy" },
+  { range: "0–24", label: "Highly Untrustworthy" },
 ];
 
 export function formatVerdict(verdict: string) {
-  return verdictLabels[verdict] ?? verdict.replaceAll("_", " ").toLowerCase();
+  return verdictLabels[verdict] ?? verdict.replaceAll("_", " ");
 }
 
 export function verdictTone(verdict: string) {
-  if (["FULFILLED", "FULFILLED_ON_TIME"].includes(verdict)) return "positive";
-  if (["FULFILLED_LATE", "PARTIALLY_FULFILLED", "PENDING", "UNCLEAR", "UNSCORABLE"].includes(verdict)) {
+  if (["True", "Mostly True"].includes(verdict)) return "positive";
+  if (
+    ["Misleading", "Unsupported", "Unresolved", "Pending"].includes(verdict)
+  ) {
     return "mixed";
   }
   return "negative";
@@ -173,29 +364,16 @@ export function formatDate(value: string) {
 
 export function claimScore(claim: Claim) {
   if (
-    claim.included_in_site_percentage !== "Yes" ||
-    claim.weighted_reliability_score === ""
+    claim.include_in_trust_score !== "Yes" ||
+    claim.score_points === ""
   ) {
     return null;
   }
-  return Number(claim.weighted_reliability_score) * 100;
+  return Number(claim.score_points);
 }
 
 export function claimTypeGroup(type: string) {
-  const value = type.toLowerCase();
-  if (value.includes("factual") || value.includes("capability")) {
-    return "Factual / capability";
-  }
-  if (value.includes("forecast")) return "Forecast";
-  if (value.includes("promise")) return "Promise";
-  if (
-    value.includes("commitment") ||
-    value.includes("goal") ||
-    value.includes("mission")
-  ) {
-    return "Commitment / goal";
-  }
-  return "Other";
+  return type;
 }
 
 export function findClaim(recordId: string) {

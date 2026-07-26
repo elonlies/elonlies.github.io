@@ -3,9 +3,9 @@ import Link from "next/link";
 import { ScoreHero } from "@/components/ScoreHero";
 import {
   claimScore,
+  datasetStats,
   findClaim,
   formatDate,
-  formatVerdict,
   supportMetrics,
   verdictTone,
 } from "@/lib/data";
@@ -13,7 +13,7 @@ import {
 export const metadata: Metadata = {
   title: "A sourced record of Elon Musk’s public claims",
   description:
-    "A provisional 33/100 Trust Score built from 100 citation-backed public claims, promises, forecasts, and outcomes.",
+    "A provisional 36% Trust Score built from 100 citation-backed public claims, promises, forecasts, and outcomes.",
 };
 
 export default function Home() {
@@ -42,19 +42,26 @@ export default function Home() {
       <section className="scope-strip" aria-label="Dataset scope">
         <div className="page-shell scope-strip__inner">
           <div>
-            <strong>100</strong>
+            <strong>{datasetStats.totalRecords}</strong>
             <span>source-backed records</span>
           </div>
           <div>
-            <strong>81</strong>
+            <strong>{datasetStats.scoredClaims}</strong>
             <span>included in the score</span>
           </div>
           <div>
-            <strong>19</strong>
-            <span>pending or excluded</span>
+            <strong>{datasetStats.excludedClaims}</strong>
+            <span>pending or unresolved</span>
           </div>
           <div>
-            <strong>91%</strong>
+            <strong>
+              {Math.round(
+                (datasetStats.highConfidenceClaims /
+                  datasetStats.totalRecords) *
+                  100,
+              )}
+              %
+            </strong>
             <span>high-confidence research</span>
           </div>
         </div>
@@ -92,6 +99,9 @@ export default function Home() {
           <Link className="text-link" href="/methodology">
             Read the methodology <span aria-hidden="true">→</span>
           </Link>
+          <Link className="text-link" href="/visualizations">
+            Explore the visualizations <span aria-hidden="true">→</span>
+          </Link>
         </div>
       </section>
 
@@ -119,8 +129,10 @@ export default function Home() {
                   <h3>{claim.statement_paraphrase}</h3>
                   <p>{claim.outcome_summary}</p>
                   <div className="featured-claim__footer">
-                    <span className={`verdict-chip verdict-${verdictTone(claim.verdict)}`}>
-                      {formatVerdict(claim.verdict)}
+                    <span
+                      className={`verdict-chip verdict-${verdictTone(claim.verdict_category)}`}
+                    >
+                      {claim.display_verdict}
                     </span>
                     <span>{score === null ? "Excluded" : `${score.toFixed(0)} points`}</span>
                   </div>
@@ -180,31 +192,46 @@ export default function Home() {
             <p className="eyebrow">Use the underlying research</p>
             <h2>Download the complete dataset.</h2>
             <p>
-              One hundred unique records, 29 fields, statement citations, outcome
-              citations, scoring decisions, confidence, and inclusion notes.
+              One hundred stable records, 39 v2 fields, statement citations,
+              outcome citations, scoring decisions, confidence, and the complete
+              v1-to-v2 migration trail.
             </p>
           </div>
           <div className="download-links">
             <a
               className="button"
-              href="/downloads/elon_musk_claims_verified_v1.csv"
+              href="/downloads/elon_musk_claims_verified_v2.csv"
               download
             >
               Row-level CSV
             </a>
             <a
               className="button button--secondary"
-              href="/downloads/elon_musk_claims_summary_v1.csv"
+              href="/downloads/elon_musk_claims_summary_v2.csv"
               download
             >
               Summary CSV
             </a>
             <a
               className="button button--secondary"
-              href="/downloads/elon_musk_claims_methodology_v1.md"
+              href="/downloads/elon_musk_claims_methodology_v2.md"
               download
             >
               Methodology
+            </a>
+            <a
+              className="button button--secondary"
+              href="/downloads/elon_musk_claims_classification_key_v2.csv"
+              download
+            >
+              Classification key
+            </a>
+            <a
+              className="button button--secondary"
+              href="/downloads/elon_musk_claims_migration_v1_to_v2.csv"
+              download
+            >
+              v1 → v2 migration
             </a>
           </div>
         </div>

@@ -23,7 +23,7 @@ export function SiteHeader() {
           ))}
         </nav>
         <p className="dataset-stamp">
-          <span>Dataset v1</span>
+          <span>Dataset v2</span>
           <span aria-hidden="true">·</span>
           <span>Evaluated Jul 26, 2026</span>
         </p>

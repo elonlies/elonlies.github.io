@@ -1,0 +1,8 @@
+﻿classification,score_points,included_in_score,definition,promise_or_commitment_display,prediction_or_forecast_display
+True,100,Yes,"The central factual claim is supported, or the commitment was fulfilled materially as stated and on time.",Fulfilled,Correct
+Mostly True,75,Yes,"The central claim held up, with a limited error, qualification, delay, or scope deviation.",Substantially Fulfilled,Mostly Correct
+Misleading,50,Yes,"Some material part held up, but missing context, scope, capability, or deadline performance substantially changed the reasonable takeaway.",Partially Fulfilled or Fulfilled Late,Mixed or Materially Late
+Unsupported,25,Yes,The claim was presented affirmatively but adequate credible support was not available; the record did not justify a definitive False verdict.,Unsupported,Unsupported
+False,0,Yes,"Reliable evidence contradicted the central claim, or a mature measurable commitment was unfulfilled or reversed.",Unfulfilled or Reversed,Incorrect
+Unresolved,,No,"Credible evidence remained insufficient or materially conflicted, or the statement lacked an objective success threshold.",Unresolved,Unresolved
+Pending,,No,The relevant deadline or explicit condition had not matured by the evaluation date.,Pending,Pending

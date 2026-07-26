@@ -35,17 +35,22 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
       [...new Set(claims.map((claim) => claim.organization_or_domain))].sort(),
     [claims],
   );
+  const domains = useMemo(
+    () => [...new Set(claims.map((claim) => claim.primary_domain))].sort(),
+    [claims],
+  );
   const verdicts = useMemo(
-    () => [...new Set(claims.map((claim) => claim.verdict))].sort(),
+    () => [...new Set(claims.map((claim) => claim.verdict_category))],
     [claims],
   );
   const types = useMemo(
-    () => [...new Set(claims.map((claim) => claimTypeGroup(claim.statement_type)))].sort(),
+    () => [...new Set(claims.map((claim) => claimTypeGroup(claim.claim_type)))].sort(),
     [claims],
   );
 
   const [search, setSearch] = useState("");
   const [organization, setOrganization] = useState("all");
+  const [domain, setDomain] = useState("all");
   const [verdict, setVerdict] = useState("all");
   const [type, setType] = useState("all");
   const [scope, setScope] = useState("all");
@@ -57,6 +62,7 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
       const params = new URLSearchParams(window.location.search);
       setSearch(params.get("q") ?? "");
       setOrganization(params.get("org") ?? "all");
+      setDomain(params.get("domain") ?? "all");
       setVerdict(params.get("verdict") ?? "all");
       setType(params.get("type") ?? "all");
       setScope(params.get("scope") ?? "all");
@@ -72,6 +78,7 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
     const params = new URLSearchParams();
     if (search) params.set("q", search);
     if (organization !== "all") params.set("org", organization);
+    if (domain !== "all") params.set("domain", domain);
     if (verdict !== "all") params.set("verdict", verdict);
     if (type !== "all") params.set("type", type);
     if (scope !== "all") params.set("scope", scope);
@@ -82,7 +89,7 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
       "",
       `${window.location.pathname}${query ? `?${query}` : ""}${window.location.hash}`,
     );
-  }, [organization, scope, search, sort, type, verdict]);
+  }, [domain, organization, scope, search, sort, type, verdict]);
 
   const filteredClaims = useMemo(() => {
     const query = search.trim().toLowerCase();
@@ -93,6 +100,9 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
         claim.outcome_summary,
         claim.topic,
         claim.organization_or_domain,
+        claim.primary_domain,
+        claim.verdict_category,
+        claim.display_verdict,
       ]
         .join(" ")
         .toLowerCase();
@@ -104,19 +114,20 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
       ) {
         return false;
       }
-      if (verdict !== "all" && claim.verdict !== verdict) return false;
-      if (type !== "all" && claimTypeGroup(claim.statement_type) !== type) {
+      if (domain !== "all" && claim.primary_domain !== domain) return false;
+      if (verdict !== "all" && claim.verdict_category !== verdict) return false;
+      if (type !== "all" && claimTypeGroup(claim.claim_type) !== type) {
         return false;
       }
       if (
         scope === "included" &&
-        claim.included_in_site_percentage !== "Yes"
+        claim.include_in_trust_score !== "Yes"
       ) {
         return false;
       }
       if (
         scope === "excluded" &&
-        claim.included_in_site_percentage === "Yes"
+        claim.include_in_trust_score === "Yes"
       ) {
         return false;
       }
@@ -141,11 +152,12 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
       }
       return a.statement_date.localeCompare(b.statement_date);
     });
-  }, [claims, organization, scope, search, sort, type, verdict]);
+  }, [claims, domain, organization, scope, search, sort, type, verdict]);
 
   const clearFilters = () => {
     setSearch("");
     setOrganization("all");
+    setDomain("all");
     setVerdict("all");
     setType("all");
     setScope("all");
@@ -173,6 +185,20 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
             >
               <option value="all">All organizations</option>
               {organizations.map((item) => (
+                <option key={item} value={item}>
+                  {item}
+                </option>
+              ))}
+            </select>
+          </label>
+          <label>
+            <span>Primary domain</span>
+            <select
+              value={domain}
+              onChange={(event) => setDomain(event.target.value)}
+            >
+              <option value="all">All domains</option>
+              {domains.map((item) => (
                 <option key={item} value={item}>
                   {item}
                 </option>
@@ -250,7 +276,7 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
                     <span className="record-id">{claim.record_id}</span>
                     <span>{formatDate(claim.statement_date)}</span>
                     <span>{claim.organization_or_domain}</span>
-                    <span>{claimTypeGroup(claim.statement_type)}</span>
+                    <span>{claimTypeGroup(claim.claim_type)}</span>
                   </div>
                   <div className="claim-row__body">
                     <div>
@@ -262,8 +288,11 @@ export function ClaimsExplorer({ claims }: ClaimsExplorerProps) {
                       <p>{claim.outcome_summary}</p>
                     </div>
                     <div className="claim-row__verdict">
-                      <span className={`verdict-chip verdict-${verdictTone(claim.verdict)}`}>
-                        {formatVerdict(claim.verdict)}
+                      <span
+                        className={`verdict-chip verdict-${verdictTone(claim.verdict_category)}`}
+                        title={`Canonical category: ${formatVerdict(claim.verdict_category)}`}
+                      >
+                        {claim.display_verdict}
                       </span>
                       <strong>
                         {score === null ? "Excluded" : `${score.toFixed(0)} / 100`}

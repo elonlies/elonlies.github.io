@@ -1,4 +1,5 @@
 import {
+  datasetStats,
   formatVerdict,
   outcomeDistribution,
   verdictTone,
@@ -10,13 +11,15 @@ export function OutcomeLedger() {
       <div
         className="outcome-strip"
         role="img"
-        aria-label="Distribution of all 100 verdicts. Exact counts follow."
+        aria-label={`Distribution of all ${datasetStats.totalRecords} verdicts. Exact counts follow.`}
       >
         {outcomeDistribution.map((outcome) => (
           <span
             className={`outcome-strip__segment verdict-${verdictTone(outcome.key)}`}
             key={outcome.key}
-            style={{ width: `${outcome.count}%` }}
+            style={{
+              width: `${(outcome.count / datasetStats.totalRecords) * 100}%`,
+            }}
             title={`${formatVerdict(outcome.key)}: ${outcome.count}`}
           />
         ))}

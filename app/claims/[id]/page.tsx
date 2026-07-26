@@ -4,6 +4,7 @@ import { notFound } from "next/navigation";
 import {
   claimScore,
   claims,
+  datasetStats,
   findClaim,
   formatDate,
   formatVerdict,
@@ -26,31 +27,28 @@ export async function generateMetadata({
   if (!claim) return { title: "Claim not found" };
 
   return {
-    title: `${claim.record_id}: ${formatVerdict(claim.verdict)}`,
+    title: `${claim.record_id}: ${claim.display_verdict}`,
     description: claim.statement_paraphrase,
   };
 }
 
-function scoreExplanation(score: number | null, verdict: string) {
+function scoreExplanation(score: number | null, exclusionReason: string) {
   if (score === null) {
-    if (verdict === "PENDING") {
-      return "Excluded from the 33/100 calculation because the measurable deadline has not elapsed.";
-    }
-    return "Excluded from the 33/100 calculation because this record is unresolved, subjective, or not objectively scoreable under the published rules.";
+    return `Excluded from the ${datasetStats.roundedScore}% calculation. ${exclusionReason}`;
   }
   if (score === 100) {
-    return "Full credit under the published rubric because the record was assessed as accurate or fully fulfilled.";
+    return "Full credit under the v2 rubric because the central claim was supported or the commitment was fulfilled materially as stated and on time.";
   }
   if (score === 75) {
-    return "Three-quarter credit under the published rubric for strong partial delivery or a result completed with modest lateness.";
+    return "Three-quarter credit under the v2 rubric because the central claim held up with a limited qualification, delay, or scope deviation.";
   }
   if (score === 50) {
-    return "Half credit under the published rubric for material partial delivery or a substantially late result.";
+    return "Half credit under the v2 rubric because missing context, reduced scope, capability limits, or deadline performance materially changed the takeaway.";
   }
   if (score === 25) {
-    return "Quarter credit under the published rubric for weak partial delivery.";
+    return "Quarter credit under the v2 rubric because adequate credible support was unavailable, without enough evidence for a definitive False verdict.";
   }
-  return "No credit under the published rubric because the record was assessed as false, unsupported, reversed, or not fulfilled.";
+  return "No credit under the v2 rubric because reliable evidence contradicted the central claim or the mature commitment was unfulfilled or reversed.";
 }
 
 function ExternalSource({
@@ -97,17 +95,25 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
               <span className="record-id">{claim.record_id}</span>
               <span>{formatDate(claim.statement_date)}</span>
               <span>{claim.organization_or_domain}</span>
-              <span>{claim.topic}</span>
+              <span>{claim.primary_domain}</span>
             </div>
             <h1>{claim.statement_paraphrase}</h1>
             <div className="claim-detail__verdict-row">
-              <span className={`verdict-chip verdict-${verdictTone(claim.verdict)}`}>
-                {formatVerdict(claim.verdict)}
+              <span
+                className={`verdict-chip verdict-${verdictTone(claim.verdict_category)}`}
+                title={`Canonical category: ${formatVerdict(claim.verdict_category)}`}
+              >
+                {claim.display_verdict}
               </span>
               <span className="claim-detail__score">
                 {score === null ? "Excluded from score" : `${score.toFixed(0)} / 100 points`}
               </span>
               <span>{claim.confidence} confidence</span>
+              {claim.credible_sources_contest_claim === "Yes" ? (
+                <span className="contestation-badge">
+                  Contested by credible sources
+                </span>
+              ) : null}
             </div>
           </div>
         </header>
@@ -125,7 +131,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                   <p className="eyebrow">Original statement</p>
                   <h3>{claim.statement_paraphrase}</h3>
                   <p>
-                    {formatDate(claim.statement_date)} · {claim.statement_type}
+                    {formatDate(claim.statement_date)} · {claim.claim_type}
                   </p>
                 </div>
               </li>
@@ -149,8 +155,8 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                 <span>04</span>
                 <div>
                   <p className="eyebrow">Verdict and score</p>
-                  <h3>{formatVerdict(claim.verdict)}</h3>
-                  <p>{scoreExplanation(score, claim.verdict)}</p>
+                  <h3>{claim.display_verdict}</h3>
+                  <p>{scoreExplanation(score, claim.exclusion_reason)}</p>
                 </div>
               </li>
             </ol>
@@ -166,45 +172,47 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                   <dd>{claim.deadline_result}</dd>
                 </div>
                 <div>
-                  <dt>Eventual fulfillment</dt>
-                  <dd>{claim.eventual_fulfillment}</dd>
+                  <dt>Eventual outcome</dt>
+                  <dd>{claim.eventual_outcome}</dd>
                 </div>
                 <div>
                   <dt>Factual accuracy</dt>
                   <dd>{claim.factual_accuracy}</dd>
                 </div>
                 <div>
-                  <dt>Binary resolved score</dt>
-                  <dd>
-                    {claim.binary_resolved_score === ""
-                      ? "Not applicable"
-                      : claim.binary_resolved_score}
-                  </dd>
+                  <dt>Canonical classification</dt>
+                  <dd>{formatVerdict(claim.verdict_category)}</dd>
                 </div>
                 <div>
-                  <dt>On-time score</dt>
+                  <dt>Score points</dt>
                   <dd>
-                    {claim.on_time_score === ""
-                      ? "Not applicable"
-                      : claim.on_time_score}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Weighted reliability</dt>
-                  <dd>
-                    {claim.weighted_reliability_score === ""
-                      ? "Not scored"
-                      : `${Number(claim.weighted_reliability_score) * 100} / 100`}
+                    {score === null ? "Not scored" : `${score} / 100`}
                   </dd>
                 </div>
                 <div>
                   <dt>Included in headline score</dt>
-                  <dd>{claim.included_in_site_percentage}</dd>
+                  <dd>{claim.include_in_trust_score}</dd>
                 </div>
+                {claim.exclusion_reason ? (
+                  <div>
+                    <dt>Exclusion reason</dt>
+                    <dd>{claim.exclusion_reason}</dd>
+                  </div>
+                ) : null}
                 <div>
                   <dt>Research confidence</dt>
                   <dd>{claim.confidence}</dd>
                 </div>
+                <div>
+                  <dt>Credible-source contestation</dt>
+                  <dd>{claim.credible_sources_contest_claim}</dd>
+                </div>
+                {claim.contestation_resolution ? (
+                  <div>
+                    <dt>Contestation resolution</dt>
+                    <dd>{claim.contestation_resolution}</dd>
+                  </div>
+                ) : null}
               </dl>
             </section>
 
@@ -255,6 +263,21 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
               <h2 id="research-notes-title">Selection and scoring notes.</h2>
             </div>
             <dl>
+              <div>
+                <dt>v2 classification rationale</dt>
+                <dd>{claim.classification_rationale}</dd>
+              </div>
+              <div>
+                <dt>v1 → v2 audit</dt>
+                <dd>
+                  {claim.legacy_verdict} at{" "}
+                  {claim.legacy_weighted_reliability_score
+                    ? `${Number(claim.legacy_weighted_reliability_score) * 100} / 100`
+                    : "not scored"}{" "}
+                  became {formatVerdict(claim.verdict_category)} at{" "}
+                  {score === null ? "not scored" : `${score} / 100`}.
+                </dd>
+              </div>
               <div>
                 <dt>Selection basis</dt>
                 <dd>{claim.selection_basis}</dd>

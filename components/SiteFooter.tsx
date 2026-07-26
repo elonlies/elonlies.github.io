@@ -12,8 +12,9 @@ export function SiteFooter() {
         </div>
         <div className="site-footer__links">
           <Link href="/score#evidence">Browse all claims</Link>
+          <Link href="/visualizations">Explore visualizations</Link>
           <Link href="/methodology">Read the methodology</Link>
-          <a href="/downloads/elon_musk_claims_verified_v1.csv" download>
+          <a href="/downloads/elon_musk_claims_verified_v2.csv" download>
             Download the CSV
           </a>
         </div>

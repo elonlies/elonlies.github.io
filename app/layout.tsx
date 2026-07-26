@@ -20,7 +20,7 @@ export const metadata: Metadata = {
     "public promises",
   ],
   openGraph: {
-    title: "Elon Musk Trust Score: 33/100",
+    title: "Elon Musk Trust Score: 36%",
     description:
       "See the 100 source-backed public claims behind the provisional score.",
     url: "https://elonlies.github.io/",
@@ -31,13 +31,13 @@ export const metadata: Metadata = {
         url: "/og.png",
         width: 1731,
         height: 909,
-        alt: "Elon Musk Trust Score: 33 out of 100, not trustworthy.",
+        alt: "Elon Musk Trust Score: 36 percent, Not Trustworthy.",
       },
     ],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Elon Musk Trust Score: 33/100",
+    title: "Elon Musk Trust Score: 36%",
     description:
       "See the 100 source-backed public claims behind the provisional score.",
     images: ["/og.png"],

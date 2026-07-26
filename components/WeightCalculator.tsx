@@ -2,40 +2,22 @@
 
 import { useMemo, useState } from "react";
 
-const scoreGroups = [
-  {
-    id: "full",
-    label: "Accurate or fully fulfilled",
-    count: 11,
-    published: 100,
-  },
-  {
-    id: "strong",
-    label: "Strong partial or slightly late",
-    count: 13,
-    published: 75,
-  },
-  {
-    id: "material",
-    label: "Material partial or substantially late",
-    count: 11,
-    published: 50,
-  },
-  {
-    id: "weak",
-    label: "Weak partial delivery",
-    count: 1,
-    published: 25,
-  },
-  {
-    id: "failed",
-    label: "False, reversed, or unfulfilled",
-    count: 45,
-    published: 0,
-  },
-];
+type ScoreGroup = {
+  id: string;
+  label: string;
+  count: number;
+  published: number;
+};
 
-export function WeightCalculator() {
+export function WeightCalculator({
+  scoreGroups,
+  scoredClaimCount,
+  publishedScore,
+}: {
+  scoreGroups: ScoreGroup[];
+  scoredClaimCount: number;
+  publishedScore: number;
+}) {
   const [weights, setWeights] = useState<Record<string, number>>(
     Object.fromEntries(scoreGroups.map((group) => [group.id, group.published])),
   );
@@ -45,8 +27,8 @@ export function WeightCalculator() {
       (total, group) => total + group.count * (weights[group.id] / 100),
       0,
     );
-    return (points / 81) * 100;
-  }, [weights]);
+    return (points / scoredClaimCount) * 100;
+  }, [scoreGroups, scoredClaimCount, weights]);
 
   const reset = () => {
     setWeights(
@@ -60,12 +42,12 @@ export function WeightCalculator() {
         <div>
           <span>Your weighting</span>
           <strong>{score.toFixed(1)}</strong>
-          <small>/100</small>
+          <small>%</small>
         </div>
-        <div>
+        <div title={`Published fraction: 2,950 / 8,300 points`}>
           <span>Published score</span>
-          <strong>32.7</strong>
-          <small>/100</small>
+          <strong>{publishedScore.toFixed(1)}</strong>
+          <small>%</small>
         </div>
       </div>
       <div className="calculator__controls">

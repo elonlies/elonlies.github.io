@@ -5,6 +5,7 @@ export const siteDescription =
 export const primaryNavigation = [
   { href: "/score", label: "Score" },
   { href: "/score#evidence", label: "Evidence" },
+  { href: "/visualizations", label: "Visualize" },
   { href: "/methodology", label: "Method" },
   { href: "/#downloads", label: "Download" },
 ];

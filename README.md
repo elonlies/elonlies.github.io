@@ -3,21 +3,26 @@
 A modern, evidence-led website for a 100-record corpus of Elon Musk’s public
 claims, promises, forecasts, and outcomes.
 
-The project presents one provisional headline score—**33/100, Not
-trustworthy**—while keeping the calculation, every excluded record, every
-verdict, and every citation open to inspection. It does not label every failed
-claim a lie or claim that the corpus represents everything Musk has ever said.
+The project presents one provisional headline score—**36%, Not
+Trustworthy** (35.5 before rounding)—while keeping the calculation, every
+excluded record, every verdict, and every citation open to inspection. It does
+not label every failed claim a lie or claim that the corpus represents
+everything Musk has ever said.
 
 ## What is included
 
 - A direct homepage conclusion with visible scope and caveats
-- Full score calculation and organization breakdowns
+- Full score calculation plus domain and organization breakdowns
 - Outcome distribution across all 100 records
+- Annual Trust Score and False-share trend lines with sample-size details
+- Raw yearly False counts, overall verdict composition, and claim-type comparisons
 - Interactive alternative-weight calculator
 - Searchable, filterable evidence index with shareable query parameters
 - A dedicated detail page for every record
-- Source links, scoring notes, confidence, and deception-intent status
+- Source links, scoring notes, confidence, credible-source contestation, and
+  deception-intent status
 - Methodology, selection-bias disclosure, correction policy, and downloads
+- A row-by-row v1-to-v2 migration audit with stable record IDs
 - Responsive, keyboard-accessible, print-friendly presentation
 
 ## Requirements
@@ -42,29 +47,38 @@ npm test
 
 This regenerates the JSON data from the checked-in CSV sources, creates the
 static GitHub Pages export, then verifies the homepage, score page, all 100 claim
-routes, public downloads, social metadata, and core dataset invariants.
+routes, visualization page, public downloads, social metadata, and core dataset
+invariants.
 
 ## Data workflow
 
-The authoritative project copies live in `source-data/`:
+The authoritative v2 project copies live in `data/`:
 
-- `elon_musk_claims_verified_v1.csv`
-- `elon_musk_claims_summary_v1.csv`
-- `elon_musk_claims_methodology_v1.md`
+- `elon_musk_claims_verified_v2.csv`
+- `elon_musk_claims_summary_v2.csv`
+- `elon_musk_claims_classification_key_v2.csv`
+- `elon_musk_claims_migration_v1_to_v2.csv`
+- `elon_musk_claims_methodology_v2.md`
 
-Run this after changing either CSV:
+The original v1 source package remains in `source-data/` for historical
+auditability.
+
+Run this after changing any v2 source file:
 
 ```bash
 npm run data:build
 ```
 
 The importer is BOM-aware, handles quoted CSV fields, verifies 100 unique record
-IDs, and requires a statement source plus a primary outcome source on every row.
-It writes the generated application data to `data/`.
+IDs, reconciles every row to the seven-category classification key and migration
+map, requires a statement source plus a primary outcome source, and verifies the
+published 2,950-of-8,300-point score. It writes the generated JSON application
+data alongside the authoritative CSVs in `data/`.
 
 The importer also keeps matching visitor downloads under `public/downloads/`
-in sync. When updating the corpus, change `source-data/`, preserve all existing
-record IDs, rerun the importer, and document corrections in version control.
+in sync. When updating the corpus, change the v2 files in `data/`, preserve all
+existing record IDs, rerun the importer, and document corrections in version
+control.
 
 ## GitHub Pages deployment
 

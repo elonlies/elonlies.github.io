@@ -1,13 +1,21 @@
 import type { Metadata } from "next";
 import Link from "next/link";
 import { ClaimsExplorer } from "@/components/ClaimsExplorer";
-import { OrganizationLedger } from "@/components/OrganizationLedger";
+import {
+  DomainLedger,
+  OrganizationLedger,
+} from "@/components/OrganizationLedger";
 import { OutcomeLedger } from "@/components/OutcomeLedger";
 import { WeightCalculator } from "@/components/WeightCalculator";
-import { claims, supportMetrics } from "@/lib/data";
+import {
+  claims,
+  datasetStats,
+  scoreGroups,
+  supportMetrics,
+} from "@/lib/data";
 
 export const metadata: Metadata = {
-  title: "Why Elon Musk scores 33/100",
+  title: "Why Elon Musk scores 36%",
   description:
     "The calculation, organization breakdowns, outcome distribution, alternative-weight calculator, and all 100 evidence records.",
 };
@@ -28,20 +36,32 @@ export default function ScorePage() {
                   Provisional
                 </span>
               </div>
-              <h1>Why Elon Musk scores 33/100</h1>
+              <h1>
+                Why Elon Musk scores{" "}
+                <span
+                  title={`Exact calculation: ${datasetStats.pointsEarned.toLocaleString("en-US")} / ${datasetStats.pointsPossible.toLocaleString("en-US")} points`}
+                >
+                  {datasetStats.roundedScore}%
+                </span>
+              </h1>
               <p className="lede">
                 Based on his record of verifiable public statements and promises in
                 this tracked dataset, Elon Musk is not trustworthy.
               </p>
             </div>
             <div className="formula-card">
-              <span className="formula-card__points">26.5</span>
-              <span>reliability points earned</span>
+              <span className="formula-card__points">
+                {datasetStats.pointsEarned.toLocaleString("en-US")}
+              </span>
+              <span>points earned</span>
               <div className="formula-card__rule" />
-              <span className="formula-card__points">81</span>
-              <span>scored claims</span>
+              <span className="formula-card__points">
+                {datasetStats.pointsPossible.toLocaleString("en-US")}
+              </span>
+              <span>points possible across {datasetStats.scoredClaims} claims</span>
               <div className="formula-card__result">
-                = 32.7, rounded to <strong>33</strong>
+                = {datasetStats.exactScore}%, rounded to{" "}
+                <strong>{datasetStats.roundedScore}%</strong>
               </div>
             </div>
           </div>
@@ -67,8 +87,8 @@ export default function ScorePage() {
           <article>
             <span>03</span>
             <p>
-              Nineteen pending, unclear, or subjective records stay public but do
-              not affect the headline denominator.
+              {datasetStats.excludedClaims} Pending or Unresolved records stay
+              public but do not affect the headline denominator.
             </p>
           </article>
         </div>
@@ -105,27 +125,39 @@ export default function ScorePage() {
         <div className="split-analysis">
           <div>
             <div className="subsection-heading">
-              <p className="eyebrow">Score by organization</p>
-              <h2>Different records, different sample sizes.</h2>
+              <p className="eyebrow">Score by primary domain</p>
+              <h2>Four subject areas, disclosed separately.</h2>
               <p>
                 Weighted score among included records. Every result shows its
                 denominator.
               </p>
             </div>
-            <OrganizationLedger />
+            <DomainLedger />
           </div>
           <div>
             <div className="subsection-heading">
-              <p className="eyebrow">All 100 records</p>
-              <h2>Outcome distribution.</h2>
+              <p className="eyebrow">Score by organization</p>
+              <h2>Different records, different sample sizes.</h2>
               <p>
-                The data retains late, partial, pending, false, and reversed as
-                distinct outcomes.
+                Organization scores remain sensitive to the claims selected for
+                each group.
               </p>
             </div>
-            <OutcomeLedger />
+            <OrganizationLedger />
           </div>
         </div>
+      </section>
+
+      <section className="section page-shell section--ruled">
+        <div className="subsection-heading">
+          <p className="eyebrow">All {datasetStats.totalRecords} records</p>
+          <h2>Canonical verdict distribution.</h2>
+          <p>
+            Display labels adapt to promises and forecasts, while these seven
+            categories keep the numerical model consistent.
+          </p>
+        </div>
+        <OutcomeLedger />
       </section>
 
       <section className="section section--ink">
@@ -140,7 +172,11 @@ export default function ScorePage() {
               tier receives and see the result immediately.
             </p>
           </div>
-          <WeightCalculator />
+          <WeightCalculator
+            scoreGroups={scoreGroups}
+            scoredClaimCount={datasetStats.scoredClaims}
+            publishedScore={datasetStats.exactScore}
+          />
         </div>
       </section>
 
@@ -151,8 +187,9 @@ export default function ScorePage() {
             <h2>The record, claim by claim.</h2>
           </div>
           <p>
-            Search all 100 records. Open any claim to inspect its original source,
-            measured outcome, scoring contribution, confidence, and intent status.
+            Search all {datasetStats.totalRecords} records. Open any claim to
+            inspect its original source, measured outcome, scoring contribution,
+            confidence, contestation status, and intent status.
           </p>
         </div>
         <ClaimsExplorer claims={claims} />

@@ -7,8 +7,9 @@
   },
   "scripts": {
     "data:build": "node scripts/import-data.mjs",
+    "og:build": "node scripts/generate-og.mjs",
     "predev": "npm run data:build",
-    "prebuild": "npm run data:build",
+    "prebuild": "npm run data:build && npm run og:build",
     "dev": "next dev",
     "build": "next build",
     "start": "node scripts/serve-static.mjs",
@@ -26,6 +27,7 @@
     "@types/react-dom": "19.2.3",
     "eslint": "9.39.4",
     "eslint-config-next": "16.2.12",
+    "sharp": "0.35.3",
     "typescript": "5.9.3"
   },
   "overrides": {
