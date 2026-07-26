@@ -15,11 +15,12 @@ as a visualizer. A data correction should not require changes under `app/`,
 
 ## Correct evidence on an existing record
 
-1. Edit the matching row in `data/elon_musk_claims_verified_vN.csv`.
+1. Edit the matching row in `data/claims.csv`.
 2. If the verdict, score, inclusion, or group changed, update the affected rows
-   in the summary CSV.
+   in `data/summary.csv`.
 3. Explain the correction in the pull request. If the dataset’s versioning
-   policy requires a migration note, update the matching migration row too.
+   policy requires a migration note, update the matching row in
+   `data/migration.csv` too.
 4. Run `npm test`.
 
 A source-title, source-URL, rationale, or outcome-text correction that does not
@@ -40,21 +41,27 @@ download package automatically.
 
 ## Replace the package with a new version
 
-1. Delete the existing five files in `data/`.
-2. Add one complete package whose filenames all target the same `vN`.
-3. Ensure every claim uses the matching `schema_version` and one common
-   `evaluation_date`.
-4. Preserve existing record IDs and include every current ID exactly once in the
-   migration CSV.
-5. Run:
+1. Keep the five stable filenames in `data/` and replace their contents.
+2. Set the new `schema_version` and one common `evaluation_date` on every row in
+   `data/claims.csv`.
+3. Set `new_schema_version` to that same version on every row in
+   `data/migration.csv`; existing records should identify one prior
+   `old_schema_version`, while genuinely new records may leave it blank.
+4. Update the version and evaluation date near the top of
+   `data/methodology.md`.
+5. Preserve existing record IDs and include every current ID exactly once in
+   `data/migration.csv`.
+6. Reconcile `data/summary.csv` and update `data/classification-key.csv` only
+   when the scoring rules changed.
+7. Run:
 
    ```bash
    npm run lint
    npm test
    ```
 
-The importer intentionally rejects mixed old/new packages instead of guessing
-which version should be live.
+The importer intentionally rejects renamed, mixed-version, or partially updated
+packages instead of guessing which data should be live.
 
 ## Pull request scope
 

@@ -53,6 +53,10 @@ export function YearlyTrendChart({
     .join(" ");
 
   const active = activeIndex === null ? null : trends[activeIndex];
+  const firstYear = trends.at(0)?.year ?? "the first year";
+  const lastYear = trends.at(-1)?.year ?? "the last year";
+  const chartTitle = `Annual Trust Score and ${zeroPointLabel} share by statement year`;
+  const chartDescription = `Two percentage lines from ${firstYear} through ${lastYear}. Point details and sample sizes are available by hovering, tapping, or focusing a year, with a complete data table below.`;
 
   return (
     <div className="trend-chart">
@@ -73,14 +77,8 @@ export function YearlyTrendChart({
         aria-labelledby="annual-trend-title annual-trend-description"
         onPointerLeave={() => setActiveIndex(null)}
       >
-        <title id="annual-trend-title">
-          Annual Trust Score and {zeroPointLabel} share by statement year
-        </title>
-        <desc id="annual-trend-description">
-          Two percentage lines from {trends.at(0)?.year ?? "the first year"} through{" "}
-          {trends.at(-1)?.year ?? "the last year"}. Point details and sample sizes
-          are available by hovering, with a complete data table below.
-        </desc>
+        <title id="annual-trend-title">{chartTitle}</title>
+        <desc id="annual-trend-description">{chartDescription}</desc>
 
         {[0, 25, 50, 75, 100].map((tick) => (
           <g key={tick}>
@@ -97,7 +95,7 @@ export function YearlyTrendChart({
               textAnchor="end"
               className="trend-chart__axis-label"
             >
-              {tick}%
+              {`${tick}%`}
             </text>
           </g>
         ))}
@@ -125,7 +123,11 @@ export function YearlyTrendChart({
           Statement year · labels show the final two digits
         </text>
 
-        <path d={trustPath} className="trend-chart__line trend-chart__line--score" />
+        <path
+          d={trustPath}
+          pathLength={1}
+          className="trend-chart__line trend-chart__line--score"
+        />
         <path d={falsePath} className="trend-chart__line trend-chart__line--false" />
 
         {activeIndex !== null ? (
@@ -140,9 +142,14 @@ export function YearlyTrendChart({
 
         {trends.map((trend, index) => (
           <g
+            className="trend-chart__year"
             key={`${trend.year}-points`}
+            tabIndex={0}
+            aria-label={`${trend.year}: Trust Score ${formatValue(trend.score)} from ${trend.scored} scored claims; ${trend.falseCount} of ${trend.total} tracked records were ${zeroPointLabel}, ${trend.falseShare.toFixed(1)} percent.`}
             onPointerEnter={() => setActiveIndex(index)}
             onPointerDown={() => setActiveIndex(index)}
+            onFocus={() => setActiveIndex(index)}
+            onBlur={() => setActiveIndex(null)}
           >
             <rect
               x={x(index) - innerWidth / trends.length / 2}
@@ -167,10 +174,7 @@ export function YearlyTrendChart({
               className="trend-chart__point trend-chart__point--false"
             />
             <title>
-              {trend.year}: Trust Score {formatValue(trend.score)}; {zeroPointLabel}{" "}
-              share {trend.falseShare.toFixed(1)}%; {trend.falseCount}{" "}
-              {zeroPointLabel} of{" "}
-              {trend.total} tracked records.
+              {`${trend.year}: Trust Score ${formatValue(trend.score)}; ${zeroPointLabel} share ${trend.falseShare.toFixed(1)}%; ${trend.falseCount} ${zeroPointLabel} of ${trend.total} tracked records.`}
             </title>
           </g>
         ))}
@@ -186,8 +190,8 @@ export function YearlyTrendChart({
           </>
         ) : (
           <>
-            Hover or tap a year for its exact score, {zeroPointLabel} count, and sample
-            size.
+            Hover, tap, or focus a year for its exact score, {zeroPointLabel} count,
+            and sample size.
           </>
         )}
       </p>

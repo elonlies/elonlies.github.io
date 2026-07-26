@@ -19,6 +19,7 @@ at build time.
 - A dedicated detail page and source chain for every record
 - Current classification rules, rating bands, methodology, and downloads
 - Responsive, keyboard-accessible, print-friendly presentation
+- Restrained, progressive motion with a complete reduced-motion fallback
 
 ## Requirements
 
@@ -50,15 +51,17 @@ claim route plus the dataset invariants.
 `data/` is the only authoritative data directory. It must contain exactly one
 complete, current package:
 
-- `elon_musk_claims_verified_vN.csv`
-- `elon_musk_claims_summary_vN.csv`
-- `elon_musk_claims_classification_key_vN.csv`
-- `elon_musk_claims_migration_vPREVIOUS_to_vN.csv`
-- `elon_musk_claims_methodology_vN.md`
+- `claims.csv`
+- `summary.csv`
+- `classification-key.csv`
+- `migration.csv`
+- `methodology.md`
 
-The importer discovers `vN` from the filenames and checks it against the
-row-level `schema_version`. It does not contain a current-version filename,
-record count, score, verdict list, or category list.
+These filenames stay stable between releases. The importer reads the current
+version and evaluation date from the `schema_version` and `evaluation_date`
+columns in `claims.csv`, then cross-checks the target version in `migration.csv`
+and the version/date block in `methodology.md`. It does not contain a hardcoded
+current version, record count, score, verdict list, or category list.
 
 The row-level claims CSV drives everything displayed by the site. The summary
 CSV is reconciled against those rows, the classification key defines score
@@ -75,12 +78,13 @@ npm run data:build
 
 It validates:
 
-- one complete package and one target version
+- the five stable source filenames
+- one content-defined schema version and evaluation date
 - CSV shape, required columns, and unique stable record IDs
 - statement and primary-outcome citations for every claim
 - score and inclusion consistency with each Primary verdict rule
 - exact score, verdict counts, and all published group summaries
-- one migration row per current claim
+- one migration row per current claim and matching source/target versions
 - methodology version and evaluation-date metadata
 
 ## Contributing evidence
@@ -89,10 +93,10 @@ Data-only pull requests should not edit React code, generated JSON, public
 downloads, or score copy. See [CONTRIBUTING.md](CONTRIBUTING.md) for the short
 correction, new-record, and full-version workflows.
 
-For a full dataset update, remove the current five files from `data/`, add the
-new five-file package with matching target versions, and run `npm test`. If the
+For a full dataset update, replace the contents of those same five files, update
+the version and evaluation date inside the data, and run `npm test`. If the
 package is internally consistent, the entire site updates without source-code
-changes.
+or filename changes.
 
 ## GitHub Pages deployment
 

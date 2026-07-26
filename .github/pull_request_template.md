@@ -8,7 +8,8 @@ Describe the evidence, record, or package update.
 - [ ] Every new or corrected claim has a statement source and primary outcome source.
 - [ ] Verdict, points, and inclusion match a Primary verdict in the classification key.
 - [ ] Summary and migration rows were updated when required.
-- [ ] `data/` contains exactly one complete five-file package.
+- [ ] `data/` contains exactly `claims.csv`, `summary.csv`, `classification-key.csv`, `migration.csv`, and `methodology.md`.
+- [ ] `schema_version`, `evaluation_date`, migration metadata, and methodology metadata agree.
 - [ ] I did not hand-edit generated data, downloads, build output, or score copy.
 - [ ] `npm run lint` passes.
 - [ ] `npm test` passes.

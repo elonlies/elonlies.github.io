@@ -14,15 +14,15 @@ const defaultDataDir = path.join(root, "data");
 const defaultGeneratedDir = path.join(root, "generated-data");
 const defaultDownloadDir = path.join(root, "public", "downloads");
 
-const packagePatterns = {
-  claims: /^elon_musk_claims_verified_v([\d.]+)\.csv$/,
-  summary: /^elon_musk_claims_summary_v([\d.]+)\.csv$/,
-  methodology: /^elon_musk_claims_methodology_v([\d.]+)\.md$/,
-  classificationKey:
-    /^elon_musk_claims_classification_key_v([\d.]+)\.csv$/,
-  migration:
-    /^elon_musk_claims_migration_v([\d.]+)_to_v([\d.]+)\.csv$/,
-};
+export const datasetFileNames = Object.freeze({
+  claims: "claims.csv",
+  summary: "summary.csv",
+  methodology: "methodology.md",
+  classificationKey: "classification-key.csv",
+  migration: "migration.csv",
+});
+
+const schemaVersionPattern = /^(?:0|[1-9]\d*)(?:\.(?:0|[1-9]\d*))*$/;
 
 const requiredClaimHeaders = [
   "record_id",
@@ -106,11 +106,25 @@ function percentage(numerator, denominator) {
   return Number(((numerator / denominator) * 100).toFixed(1));
 }
 
-function versionMatchesFile(schemaVersion, fileVersion) {
+function isValidIsoDate(value) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(value)) return false;
+  const parsed = new Date(`${value}T00:00:00Z`);
   return (
-    schemaVersion === fileVersion ||
-    schemaVersion.split(".")[0] === fileVersion
+    !Number.isNaN(parsed.getTime()) &&
+    parsed.toISOString().slice(0, 10) === value
   );
+}
+
+export function formatVersionLabel(schemaVersion) {
+  if (!schemaVersionPattern.test(schemaVersion)) {
+    fail(
+      `schema version "${schemaVersion}" must contain dot-separated nonnegative integers.`,
+    );
+  }
+
+  const parts = schemaVersion.split(".");
+  while (parts.length > 1 && parts.at(-1) === "0") parts.pop();
+  return `v${parts.join(".")}`;
 }
 
 function normalizeClassificationRows(rows) {
@@ -213,59 +227,39 @@ export function parseCsv(source, fileName = "CSV file") {
 
 export function discoverDatasetPackage(fileNames) {
   const visibleFiles = fileNames.filter((fileName) => !fileName.startsWith("."));
-  const discovered = {};
-  const unrecognized = [];
-
-  for (const fileName of visibleFiles) {
-    let matched = false;
-
-    for (const [role, pattern] of Object.entries(packagePatterns)) {
-      const match = fileName.match(pattern);
-      if (!match) continue;
-      matched = true;
-
-      if (discovered[role]) {
-        fail(
-          `data/ contains more than one ${role} file (${discovered[role].fileName}, ${fileName}). Remove older dataset packages.`,
-        );
-      }
-
-      discovered[role] = {
-        fileName,
-        sourceVersion: role === "migration" ? match[1] : null,
-        targetVersion: role === "migration" ? match[2] : match[1],
-      };
-      break;
-    }
-
-    if (!matched) unrecognized.push(fileName);
-  }
-
-  const missingRoles = Object.keys(packagePatterns).filter(
-    (role) => !discovered[role],
+  const expectedFiles = Object.values(datasetFileNames);
+  const missingFiles = expectedFiles.filter(
+    (fileName) => !visibleFiles.includes(fileName),
   );
-  if (missingRoles.length > 0) {
-    fail(`data/ is missing package files for: ${missingRoles.join(", ")}.`);
+  const unexpectedFiles = visibleFiles.filter(
+    (fileName) => !expectedFiles.includes(fileName),
+  );
+  const duplicateFiles = visibleFiles.filter(
+    (fileName, index) => visibleFiles.indexOf(fileName) !== index,
+  );
+
+  if (missingFiles.length > 0) {
+    fail(`data/ is missing required files: ${missingFiles.join(", ")}.`);
   }
-  if (unrecognized.length > 0) {
+  if (unexpectedFiles.length > 0) {
     fail(
-      `data/ must contain only the current five-file dataset package. Unexpected files: ${unrecognized.join(", ")}.`,
+      `data/ must contain only the five stable dataset files. Unexpected files: ${unexpectedFiles.join(", ")}.`,
+    );
+  }
+  if (duplicateFiles.length > 0) {
+    fail(
+      `dataset filenames must be unique. Duplicates: ${[
+        ...new Set(duplicateFiles),
+      ].join(", ")}.`,
     );
   }
 
-  const versions = new Set(
-    Object.values(discovered).map((file) => file.targetVersion),
+  return Object.fromEntries(
+    Object.entries(datasetFileNames).map(([role, fileName]) => [
+      role,
+      { fileName },
+    ]),
   );
-  if (versions.size !== 1) {
-    fail(
-      `dataset filenames target mixed versions: ${[...versions].join(", ")}.`,
-    );
-  }
-
-  return {
-    ...discovered,
-    fileVersion: [...versions][0],
-  };
 }
 
 function validateSummary({
@@ -515,7 +509,7 @@ export async function buildDataset({
   }
   requireHeaders(
     migrationCsv.headers,
-    ["record_id", "new_schema_version"],
+    ["record_id", "old_schema_version", "new_schema_version"],
     packageFiles.migration.fileName,
   );
 
@@ -549,11 +543,7 @@ export async function buildDataset({
     );
   }
   const schemaVersion = [...schemaVersions][0];
-  if (!versionMatchesFile(schemaVersion, packageFiles.fileVersion)) {
-    fail(
-      `schema_version ${schemaVersion} does not match filename version v${packageFiles.fileVersion}.`,
-    );
-  }
+  const versionLabel = formatVersionLabel(schemaVersion);
 
   const evaluationDates = new Set(
     claims.map((claim) => claim.evaluation_date),
@@ -566,6 +556,11 @@ export async function buildDataset({
     );
   }
   const evaluationDate = [...evaluationDates][0];
+  if (!isValidIsoDate(evaluationDate)) {
+    fail(
+      `evaluation_date "${evaluationDate}" must use a valid YYYY-MM-DD date.`,
+    );
+  }
 
   const classificationByName = new Map();
   for (const rule of classificationKey) {
@@ -695,6 +690,23 @@ export async function buildDataset({
       `migration new_schema_version must be ${schemaVersion} for every row.`,
     );
   }
+  const sourceSchemaVersions = [
+    ...new Set(
+      migration
+        .map((row) => row.old_schema_version)
+        .filter((version) => version !== ""),
+    ),
+  ];
+  if (sourceSchemaVersions.length !== 1) {
+    fail(
+      `migration must identify one prior old_schema_version; found ${
+        sourceSchemaVersions.join(", ") || "none"
+      }.`,
+    );
+  }
+  const sourceSchemaVersion = sourceSchemaVersions[0];
+  const sourceVersionLabel = formatVersionLabel(sourceSchemaVersion);
+  const migrationLabel = `${sourceVersionLabel} → ${versionLabel} migration`;
 
   const scoredClaims = claims.filter(
     (claim) => claim.include_in_trust_score === "Yes",
@@ -733,16 +745,7 @@ export async function buildDataset({
   const citationUrls = claims.flatMap((claim) =>
     citationHeaders.map((header) => claim[header]).filter(Boolean),
   );
-  const versionLabel = `v${packageFiles.fileVersion}`;
-  const sourceVersionLabel = `v${packageFiles.migration.sourceVersion}`;
-  const migrationLabel = `${sourceVersionLabel} → ${versionLabel} migration`;
-  const sourceFiles = {
-    claims: packageFiles.claims.fileName,
-    summary: packageFiles.summary.fileName,
-    methodology: packageFiles.methodology.fileName,
-    classificationKey: packageFiles.classificationKey.fileName,
-    migration: packageFiles.migration.fileName,
-  };
+  const sourceFiles = { ...datasetFileNames };
   const downloads = [
     {
       role: "claims",
@@ -777,7 +780,7 @@ export async function buildDataset({
   const dataset = {
     meta: {
       schemaVersion,
-      fileVersion: packageFiles.fileVersion,
+      sourceSchemaVersion,
       versionLabel,
       sourceVersionLabel,
       migrationLabel,

@@ -99,7 +99,7 @@ export type DatasetDownload = {
 
 type DatasetMeta = {
   schemaVersion: string;
-  fileVersion: string;
+  sourceSchemaVersion: string;
   versionLabel: string;
   sourceVersionLabel: string;
   migrationLabel: string;

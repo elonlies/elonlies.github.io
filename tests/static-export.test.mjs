@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import { access, readFile, readdir } from "node:fs/promises";
 import test from "node:test";
+import {
+  datasetFileNames,
+  formatVersionLabel,
+} from "../scripts/import-data.mjs";
 
 const outputRoot = new URL("../out/", import.meta.url);
 const dataRoot = new URL("../data/", import.meta.url);
@@ -168,6 +172,15 @@ test("exports GitHub Pages metadata and only the current package", async () => {
 
 test("generated data reconciles score, categories, citations, and migration", () => {
   assert.equal(claims.length, meta.totalRecords);
+  assert.deepEqual(
+    [...new Set(claims.map((claim) => claim.schema_version))],
+    [meta.schemaVersion],
+  );
+  assert.deepEqual(
+    [...new Set(claims.map((claim) => claim.evaluation_date))],
+    [meta.evaluationDate],
+  );
+  assert.equal(meta.versionLabel, formatVersionLabel(meta.schemaVersion));
   assert.equal(
     new Set(claims.map((claim) => claim.record_id)).size,
     meta.totalRecords,
@@ -177,6 +190,20 @@ test("generated data reconciles score, categories, citations, and migration", ()
   assert.deepEqual(
     new Set(migration.map((row) => row.record_id)),
     new Set(claims.map((claim) => claim.record_id)),
+  );
+  assert.deepEqual(
+    [
+      ...new Set(
+        migration
+          .map((row) => row.old_schema_version)
+          .filter((version) => version !== ""),
+      ),
+    ],
+    [meta.sourceSchemaVersion],
+  );
+  assert.deepEqual(
+    [...new Set(migration.map((row) => row.new_schema_version))],
+    [meta.schemaVersion],
   );
 
   const included = claims.filter(
@@ -221,6 +248,7 @@ test("generated data reconciles score, categories, citations, and migration", ()
 test("data is one authoritative package and downloads are byte-identical", async () => {
   const dataFiles = (await readdir(dataRoot)).sort();
   const expectedFiles = Object.values(meta.sourceFiles).sort();
+  assert.deepEqual(meta.sourceFiles, datasetFileNames);
   assert.deepEqual(dataFiles, expectedFiles);
 
   await Promise.all(

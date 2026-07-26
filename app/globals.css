@@ -17,6 +17,12 @@
   --dark-surface: #1d201b;
   --dark-rule: #42463e;
   --max-width: 1240px;
+  --motion-fast: 160ms;
+  --motion-base: 260ms;
+  --motion-reveal: 560ms;
+  --motion-hero: 680ms;
+  --motion-ease-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --motion-ease-standard: cubic-bezier(0.2, 0, 0, 1);
   --font-sans:
     Inter, ui-sans-serif, -apple-system, BlinkMacSystemFont, "Segoe UI",
     Helvetica, Arial, sans-serif;
@@ -191,6 +197,9 @@ h3 {
   font-weight: 700;
   letter-spacing: 0.055em;
   text-decoration: none;
+  transition:
+    color var(--motion-fast) var(--motion-ease-standard),
+    opacity var(--motion-fast) var(--motion-ease-standard);
 }
 
 .wordmark__primary {
@@ -212,6 +221,9 @@ h3 {
   font-size: 0.9rem;
   font-weight: 640;
   text-decoration: none;
+  transition:
+    color var(--motion-fast) var(--motion-ease-standard),
+    transform var(--motion-fast) var(--motion-ease-out);
 }
 
 .site-nav a:hover {
@@ -265,8 +277,9 @@ h3 {
   background: var(--surface);
   text-decoration: none;
   transition:
-    transform 180ms ease,
-    box-shadow 180ms ease;
+    transform var(--motion-base) var(--motion-ease-out),
+    box-shadow var(--motion-base) var(--motion-ease-out),
+    border-color var(--motion-fast) var(--motion-ease-standard);
 }
 
 .score-hero::after {
@@ -280,7 +293,7 @@ h3 {
   content: "";
 }
 
-.score-hero:hover {
+.score-hero:is(:hover, :focus-visible) {
   transform: translate(-4px, -4px);
   box-shadow: 8px 8px 0 var(--ink);
 }
@@ -352,9 +365,15 @@ h3 {
 }
 
 .text-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
   width: fit-content;
   color: var(--link);
   font-weight: 700;
+  transition:
+    color var(--motion-fast) var(--motion-ease-standard),
+    transform var(--motion-fast) var(--motion-ease-out);
 }
 
 .scope-strip {
@@ -544,9 +563,16 @@ h3 {
 }
 
 .featured-claim > a {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.25rem;
+  width: fit-content;
   margin-top: 1.5rem;
   color: #9cc5ff;
   font-weight: 700;
+  transition:
+    color var(--motion-fast) var(--motion-ease-standard),
+    transform var(--motion-fast) var(--motion-ease-out);
 }
 
 .principles-grid {
@@ -628,6 +654,12 @@ h3 {
   text-align: center;
   text-decoration: none;
   cursor: pointer;
+  transition:
+    background-color var(--motion-fast) var(--motion-ease-standard),
+    border-color var(--motion-fast) var(--motion-ease-standard),
+    color var(--motion-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-base) var(--motion-ease-out),
+    transform var(--motion-base) var(--motion-ease-out);
 }
 
 .button:hover {
@@ -709,6 +741,9 @@ h3 {
   color: inherit;
   font-size: 0.9rem;
   font-weight: 700;
+  transition:
+    color var(--motion-fast) var(--motion-ease-standard),
+    transform var(--motion-fast) var(--motion-ease-out);
 }
 
 .detail-hero__grid {
@@ -1082,6 +1117,15 @@ h3 {
   border-radius: 0;
   background: var(--surface);
   color: var(--ink);
+  transition:
+    border-color var(--motion-fast) var(--motion-ease-standard),
+    box-shadow var(--motion-fast) var(--motion-ease-standard);
+}
+
+.claims-filters input:focus,
+.claims-filters select:focus {
+  border-color: var(--focus);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 18%, transparent);
 }
 
 .search-field input {
@@ -1149,6 +1193,7 @@ h3 {
 
 .claim-row h3 a {
   text-decoration: none;
+  transition: color var(--motion-fast) var(--motion-ease-standard);
 }
 
 .claim-row h3 a:hover {
@@ -1231,6 +1276,9 @@ h3 {
   color: var(--link);
   font-size: 0.88rem;
   font-weight: 700;
+  transition:
+    color var(--motion-fast) var(--motion-ease-standard),
+    transform var(--motion-fast) var(--motion-ease-out);
 }
 
 .empty-state {
@@ -1607,6 +1655,10 @@ h3 {
   padding: 1.5rem;
   border-left: 1px solid var(--rule);
   text-decoration: none;
+  transition:
+    background-color var(--motion-base) var(--motion-ease-standard),
+    box-shadow var(--motion-base) var(--motion-ease-out),
+    transform var(--motion-base) var(--motion-ease-out);
 }
 
 .source-link:last-child {
@@ -1671,6 +1723,9 @@ h3 {
   flex-direction: column;
   gap: 0.4rem;
   text-decoration: none;
+  transition:
+    color var(--motion-fast) var(--motion-ease-standard),
+    transform var(--motion-fast) var(--motion-ease-out);
 }
 
 .record-pagination a:last-child {
@@ -2055,6 +2110,333 @@ h3 {
   text-align: right;
 }
 
+.site-footer__links a,
+.text-button,
+.trend-chart__table summary {
+  transition:
+    color var(--motion-fast) var(--motion-ease-standard),
+    opacity var(--motion-fast) var(--motion-ease-standard),
+    transform var(--motion-fast) var(--motion-ease-out);
+}
+
+.organization-row__rail span,
+.outcome-strip__segment,
+.annual-volume__tracked,
+.annual-volume__false,
+.type-score-row__rail span {
+  transform-origin: left center;
+}
+
+.trend-chart__point {
+  transform-box: fill-box;
+  transform-origin: center;
+  transition:
+    opacity var(--motion-fast) var(--motion-ease-standard),
+    transform var(--motion-fast) var(--motion-ease-out);
+}
+
+.trend-chart__year:focus {
+  outline: none;
+}
+
+.trend-chart__year:is(:hover, :focus-visible) .trend-chart__point {
+  transform: scale(1.18);
+}
+
+.trend-chart__year:focus-visible .trend-chart__point {
+  stroke-width: 5;
+}
+
+@media (hover: hover) and (pointer: fine) {
+  .site-nav a:hover,
+  .button:hover {
+    transform: translateY(-2px);
+  }
+
+  .button:hover {
+    box-shadow: 0 7px 18px rgb(22 24 20 / 16%);
+  }
+
+  .text-link:hover,
+  .featured-claim > a:hover,
+  .claim-row__open:hover,
+  .site-footer__links a:hover,
+  .text-button:hover,
+  .trend-chart__table summary:hover {
+    transform: translateX(3px);
+  }
+
+  .back-link:hover {
+    transform: translateX(-3px);
+  }
+
+  .source-link:hover {
+    transform: translateY(-3px);
+    box-shadow: 0 12px 28px rgb(22 24 20 / 8%);
+  }
+
+  .record-pagination a:first-child:hover {
+    transform: translateX(-3px);
+  }
+
+  .record-pagination a:last-child:hover {
+    transform: translateX(3px);
+  }
+}
+
+.button:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 7px 18px rgb(22 24 20 / 16%);
+}
+
+.source-link:focus-visible {
+  background: var(--surface);
+  transform: translateY(-3px);
+}
+
+@keyframes motion-rise {
+  from {
+    opacity: 0;
+    transform: translate3d(0, 16px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motion-drop {
+  from {
+    opacity: 0;
+    transform: translate3d(0, -10px, 0);
+  }
+
+  to {
+    opacity: 1;
+    transform: translate3d(0, 0, 0);
+  }
+}
+
+@keyframes motion-scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes motion-bar-grow {
+  from {
+    transform: scaleX(0);
+  }
+
+  to {
+    transform: scaleX(1);
+  }
+}
+
+@keyframes motion-line-draw {
+  from {
+    stroke-dashoffset: 1;
+  }
+
+  to {
+    stroke-dashoffset: 0;
+  }
+}
+
+@keyframes motion-fade {
+  from {
+    opacity: 0;
+  }
+
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .site-header__inner > * {
+    animation: motion-drop 460ms var(--motion-ease-out) backwards;
+  }
+
+  .site-header__inner > :nth-child(2) {
+    animation-delay: 70ms;
+  }
+
+  .site-header__inner > :nth-child(3) {
+    animation-delay: 120ms;
+  }
+
+  .home-hero__intro > .eyebrow,
+  .home-hero__intro > h1,
+  .home-hero__intro > .lede,
+  .score-hero {
+    animation: motion-rise var(--motion-hero) var(--motion-ease-out) backwards;
+  }
+
+  .home-hero__intro > h1 {
+    animation-delay: 80ms;
+  }
+
+  .home-hero__intro > .lede {
+    animation-delay: 150ms;
+  }
+
+  .score-hero {
+    animation-delay: 190ms;
+  }
+
+  .detail-hero .back-link,
+  .claim-detail__header .back-link {
+    animation: motion-rise 520ms var(--motion-ease-out) 30ms backwards;
+  }
+
+  .detail-hero__grid > div,
+  .method-hero > *,
+  .claim-detail__meta,
+  .claim-detail__header h1,
+  .claim-detail__verdict-row,
+  .not-found > * {
+    animation: motion-rise var(--motion-hero) var(--motion-ease-out) backwards;
+  }
+
+  .detail-hero__grid > :first-child,
+  .method-hero > :first-child,
+  .claim-detail__meta,
+  .not-found > :first-child {
+    animation-delay: 90ms;
+  }
+
+  .detail-hero__grid > :nth-child(2),
+  .method-hero > :nth-child(2),
+  .claim-detail__header h1,
+  .not-found > :nth-child(2) {
+    animation-delay: 160ms;
+  }
+
+  .method-hero > :nth-child(3),
+  .claim-detail__verdict-row,
+  .not-found > :nth-child(3) {
+    animation-delay: 230ms;
+  }
+
+  .not-found > :nth-child(4) {
+    animation-delay: 300ms;
+  }
+
+  .trend-chart__guide {
+    animation: motion-fade var(--motion-fast) var(--motion-ease-standard)
+      backwards;
+  }
+
+  @supports (animation-timeline: view()) {
+    :where(
+      .scope-strip__inner > div,
+      .section-heading,
+      .subsection-heading,
+      .metric-row,
+      .featured-claim,
+      .principles-grid article,
+      .download-panel > *,
+      .compact-cta > *,
+      .scope-notes article,
+      .organization-row,
+      .outcome-list > div,
+      .calculator,
+      .trend-readout > div,
+      .visualization-caveat,
+      .trend-chart,
+      .annual-volume__row,
+      .visualization-split > section,
+      .type-score-row,
+      .method-section,
+      .changelog,
+      .evidence-chain,
+      .claim-detail__grid > section,
+      .sources-section,
+      .research-notes,
+      .record-pagination,
+      .site-footer__inner > *
+    ) {
+      animation: motion-rise var(--motion-reveal) var(--motion-ease-out) both;
+      animation-timeline: view(block);
+      animation-range: entry 3% cover 28%;
+    }
+
+    :where(
+      .scope-strip__inner > div,
+      .featured-claim,
+      .principles-grid article,
+      .scope-notes article,
+      .trend-readout > div
+    ):nth-child(2) {
+      animation-range: entry 7% cover 32%;
+    }
+
+    :where(
+      .scope-strip__inner > div,
+      .featured-claim,
+      .principles-grid article,
+      .scope-notes article,
+      .trend-readout > div
+    ):nth-child(3) {
+      animation-range: entry 11% cover 36%;
+    }
+
+    .scope-strip__inner > div:nth-child(4) {
+      animation-range: entry 15% cover 40%;
+    }
+
+    .organization-row__rail span,
+    .outcome-strip__segment,
+    .annual-volume__tracked,
+    .annual-volume__false,
+    .type-score-row__rail span {
+      animation: motion-bar-grow 1ms var(--motion-ease-out) both;
+      animation-timeline: view(block);
+      animation-range: entry 5% cover 34%;
+    }
+
+    .verdict-donut {
+      animation: motion-scale-in 1ms var(--motion-ease-out) both;
+      animation-timeline: view(block);
+      animation-range: entry 5% cover 36%;
+    }
+
+    .verdict-mix__legend > div {
+      animation: motion-rise 1ms var(--motion-ease-out) both;
+      animation-timeline: view(block);
+      animation-range: entry 5% cover 28%;
+    }
+
+    .trend-chart {
+      view-timeline-name: --trend-chart-reveal;
+      view-timeline-axis: block;
+    }
+
+    .trend-chart__line--score {
+      stroke-dasharray: 1;
+      stroke-dashoffset: 1;
+      animation: motion-line-draw 1ms var(--motion-ease-out) both;
+      animation-timeline: --trend-chart-reveal;
+      animation-range: entry 12% cover 42%;
+    }
+
+    .trend-chart__line--false,
+    .trend-chart__point {
+      animation: motion-fade 1ms var(--motion-ease-standard) both;
+      animation-timeline: --trend-chart-reveal;
+      animation-range: entry 24% cover 48%;
+    }
+  }
+}
+
 @media (max-width: 1050px) {
   .site-header__inner {
     grid-template-columns: 1fr auto;
@@ -2175,7 +2557,7 @@ h3 {
     padding: 1.5rem;
   }
 
-  .score-hero:hover {
+  .score-hero:is(:hover, :focus-visible) {
     transform: none;
     box-shadow: none;
   }
@@ -2466,13 +2848,29 @@ h3 {
 }
 
 @media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto !important;
+  }
+
   *,
   *::before,
   *::after {
     scroll-behavior: auto !important;
-    transition-duration: 0.01ms !important;
-    animation-duration: 0.01ms !important;
-    animation-iteration-count: 1 !important;
+    transition: none !important;
+    animation: none !important;
+    animation-delay: 0s !important;
+  }
+
+  .score-hero,
+  .button,
+  .text-link,
+  .back-link,
+  .source-link,
+  .featured-claim > a,
+  .claim-row__open,
+  .record-pagination a,
+  .site-nav a {
+    transform: none !important;
   }
 }
 
