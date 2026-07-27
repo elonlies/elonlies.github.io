@@ -1139,6 +1139,12 @@ h3 {
   gap: 0.8rem;
 }
 
+.mobile-filter-toggle,
+.mobile-active-filters,
+.mobile-filter-footer {
+  display: none;
+}
+
 .claims-results-header {
   display: flex;
   align-items: center;
@@ -3006,7 +3012,115 @@ h3 {
   }
 
   .claims-filters {
-    top: 0;
+    position: static;
+    z-index: auto;
+    padding-block: 1.25rem;
+    background: transparent;
+    backdrop-filter: none;
+  }
+
+  .search-field {
+    margin-bottom: 0.75rem;
+  }
+
+  .mobile-filter-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    min-height: 48px;
+    padding: 0.65rem 0.8rem;
+    border: 1px solid var(--ink);
+    background: transparent;
+    color: var(--ink);
+    font-family: var(--font-mono);
+    font-size: 0.76rem;
+    font-weight: 700;
+    letter-spacing: 0.045em;
+    text-align: left;
+    text-transform: uppercase;
+    cursor: pointer;
+  }
+
+  .mobile-filter-toggle > span:first-child {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.55rem;
+  }
+
+  .mobile-filter-toggle strong {
+    display: inline-grid;
+    place-items: center;
+    min-width: 1.6rem;
+    min-height: 1.6rem;
+    padding-inline: 0.35rem;
+    border-radius: 999px;
+    background: var(--ink);
+    color: var(--paper);
+    font-size: 0.68rem;
+  }
+
+  .mobile-filter-toggle__icon {
+    font-family: var(--font-sans);
+    font-size: 1.4rem;
+    font-weight: 400;
+    line-height: 1;
+  }
+
+  .mobile-active-filters {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem;
+    margin-top: 0.75rem;
+  }
+
+  .mobile-active-filters button {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    max-width: 100%;
+    min-height: 38px;
+    padding: 0.45rem 0.65rem;
+    border: 1px solid #a7a298;
+    border-radius: 999px;
+    background: var(--surface);
+    color: var(--ink);
+    font-size: 0.78rem;
+    cursor: pointer;
+  }
+
+  .mobile-active-filters button > span:first-child {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .filter-grid {
+    display: none;
+    margin-top: 1rem;
+    padding-top: 1rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .claims-filters--open .filter-grid {
+    display: grid;
+  }
+
+  .mobile-filter-footer {
+    display: flex;
+    grid-column: 1 / -1;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-top: 0.4rem;
+  }
+
+  .mobile-filter-footer .button {
+    flex: 1;
+  }
+
+  .claims-results-header {
+    scroll-margin-top: 1rem;
   }
 
   .filter-grid {

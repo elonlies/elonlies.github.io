@@ -158,6 +158,15 @@ test("exports all data-driven pages and every stable claim route", async () => {
   assert.match(scoreHtml, /Topic category/i);
   assert.match(scoreHtml, /Organization or context/i);
   assert.match(scoreHtml, /intentional deception/i);
+  assert.match(
+    scoreHtml,
+    /class="mobile-filter-toggle"[^>]*aria-expanded="false"[^>]*aria-controls="claim-filter-options"/i,
+  );
+  assert.match(scoreHtml, /id="claim-filter-options"/i);
+  assert.match(
+    scoreHtml,
+    new RegExp(`Show ${meta.totalRecords} results`, "i"),
+  );
   assert.match(scoreHtml, /does not mean (?:the )?(?:claim|statement) was true/i);
   assert.doesNotMatch(scoreHtml, /Score by organization/i);
   assert.match(visualizationsHtml, /See the pattern, not just the headline/i);
