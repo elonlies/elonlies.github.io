@@ -1,40 +1,37 @@
-# Elon Musk Claims Dataset v4 Methodology
+# Elon Musk Claims Dataset v5 Methodology
 
-Evaluation date: 2026-07-26
-Schema version: 4.0
-Evidence audit schema: evidence-audit-v1.0
+Evaluation date: 2026-07-26  
+Schema version: 5.0  
+Evidence audit schema: strict-promise-evidence-audit-v2.0
 
 ## Headline result
 
-The V4 Trust Score is **34.3%**, rounded to **34%** for homepage display, based on **123 scored claims** out of **143 total records**. Under the published bands, the conclusion is **Not Trustworthy**.
+V5 contains **155 records**, with **138 resolved claims** included in the Trust Score. The exact Trust Score is **22.5%** (3,100 of 13,800 possible points), rounded to **22%** for homepage display. Under the published rating bands, the conclusion is **Highly Untrustworthy**.
 
 Recommended public wording:
 
-> Based on the record of material, verifiable public statements, predictions, and promises in this tracked dataset, Elon Musk is not trustworthy.
+> Based on the record of material, verifiable public statements, forecasts, and commitments in this tracked dataset, Elon Musk is highly untrustworthy.
 
-This is a curated reliability audit. It is not a statistically representative measurement of every statement Musk has ever made.
+This is a curated reliability audit. It is not a statistically representative estimate of every statement Musk has ever made.
 
-## What changed from v3
+## The V5 correction: strict promises mean strict deadlines
 
-- Expanded the corpus from 130 to **143 records**.
-- Added three X / Twitter commitments, including the Alex Jones reinstatement reversal, child-safety priority claim, and promised removal of blocking.
-- Added nine Public discourse and personal-history records involving antisemitism, South African “white genocide” claims, UK political accusations, DOGE spending claims, education history, and a credibly contested account of Musk’s first child’s death.
-- Added one Tesla founder-title record.
-- Reclassified `ZIP2-001` from Unresolved to False because the V4 proposition is Musk’s blanket denial and the cited documentary record establishes unauthorized work during part of the relevant period.
-- Added an explicit answer to **“Was intentional deception established?”** for every record.
-- Added field-level evidence bases and deterministic evidence metrics for every evaluation output.
-- Replaced unreviewed migration placeholders with evidence-bounded wording.
+V4 awarded partial credit to promises that were delivered late or only partially. V5 removes that ambiguity.
 
-## Current results
+For every Promise or Commitment and Prediction or Forecast:
 
-- Overall: **34.3%**, Not Trustworthy, n=123 scored.
-- Public discourse: **23.6%**, Highly Untrustworthy, n=36 scored and 38 total.
-- X / Twitter: **40.9%**, Not Trustworthy, n=11 scored and 14 total.
-- Intentional deception established: **0 Yes**, **123 No**, and **20 Not assessable** because Pending and Unresolved rows are not suitable for a state-of-mind conclusion.
+- **True, 100 points** only when every material term was met, including timing, scope, quantity, capability, price, and permanence.
+- **False, 0 points** when any matured material term failed.
+- **Pending, excluded** when the deadline or condition has not matured.
+- **Unresolved, excluded** when the evidence cannot responsibly establish pass or fail.
 
-## Trust Score formula
+A later delivery is recorded in `eventual_outcome` and `later_delivery_note`, but it cannot satisfy the original proposition. Put plainly: **2012 is not 2010**. A result hours late, eight days late, or years late is False when the original statement promised a specific deadline.
 
-Trust Score = total points earned / total possible points × 100
+The rule is intentionally strict because this project measures whether a public commitment was reliable as stated, not whether something vaguely similar happened eventually.
+
+## Factual-claim categories
+
+Factual assertions retain the streamlined evidence categories:
 
 - True: 100
 - Mostly True: 75
@@ -42,115 +39,98 @@ Trust Score = total points earned / total possible points × 100
 - Unsupported: 25
 - False: 0
 - Unresolved: excluded
-- Pending: excluded
 
-V4 earns **4,225 points out of 12,300 possible points**. The point total is calculated directly from the evidence-based row verdicts.
+Mostly True, Misleading, and Unsupported are no longer available to promises or forecasts.
 
-## Verdict definitions
+## V5 research additions
 
-### True
-The central factual claim is supported, or a commitment was fulfilled materially as stated and on time.
+V5 adds records involving:
 
-### Mostly True
-The central claim held up with a meaningful but nonfatal qualification, limited factual error, delay, or omission.
+- Apple App Store removal claims and Musk's later correction
+- The promise that stolen-election falsehoods on X would be corrected
+- X's Q2 2023 cash-flow prediction
+- Tesla's August 8 robotaxi unveiling deadline
+- A May 2021 FSD-subscription commitment
+- A favorable FSD Beta rollout prediction that was actually met
+- Separate 2025 and 2026 Optimus propositions
+- DOGE's $1 trillion spending-cut target
+- Michigan voter-roll claims
+- Musk's SNL host-history claim
+- The Springfield Haitian pet-eating narrative
+- Separate narrow and broad emerald-operation propositions
 
-### Misleading
-Some material portion held up, but context, framing, scope, capability, or timing substantially changed the reasonable takeaway.
+Favorable, unfavorable, and unresolved rows are all retained when they meet the same inclusion rule.
 
-### Unsupported
-The affirmative claim lacks adequate credible support, but the evidence does not justify a definitive False verdict.
+## Trust Score formula
 
-### False
-Reliable evidence contradicts the central claim, or a mature measurable commitment was unfulfilled or reversed.
+Trust Score = total points earned / total possible points × 100
 
-### Unresolved
-Evidence is genuinely insufficient or materially conflicted. These rows remain visible but do not alter the score.
+Pending and Unresolved rows remain visible but are excluded from the denominator.
 
-### Pending
-The deadline or explicit condition has not matured by the evaluation date. These rows remain visible but do not alter the score.
+## All evaluation outputs are evidence-derived
 
-## All evaluation statistics are evidence-derived
+Each claim includes evidence bases for:
 
-Each main-CSV row contains evidence bases for:
+1. deadline result
+2. eventual outcome
+3. factual accuracy
+4. canonical verdict
+5. score points
+6. score inclusion
+7. confidence
+8. credible-source contestation
+9. correction status
+10. repetition after correction
+11. intentional-deception answer
+12. strict promise result
 
-- deadline result
-- eventual outcome
-- factual accuracy
-- canonical verdict
-- score points
-- score inclusion
-- credible-source contestation
-- correction status
-- repetition after correction
-- confidence
-- intentional-deception answer
-
-The `evaluation-audit.csv` file expands those eleven outputs into **1,573 audit rows**. Each audit row includes the metric value, evidence basis, evidence URLs, calculation rule, evidence-strength score, and confidence score.
+The field-level `evaluation-audit.csv` contains exactly one row for each of these twelve outputs for every claim.
 
 ## Evidence metrics
 
-The evidence metrics are deterministic and transparent:
-
 - Statement evidence quality: 0 to 30
 - Outcome evidence quality: 0 to 40
-- Corroboration: 0 to 15
+- Independent corroboration: 0 to 15
 - Directness: 0 to 15
 - Evidence strength: sum of the four components, maximum 100
-- Verdict confidence: evidence strength after published deductions
+- Verdict confidence: evidence strength after published deductions for nuance, contestation, unresolved conflict, weak independence, or party-only outcome evidence
 
-Deductions apply to nuanced verdicts, unresolved conflicts, party-only outcome evidence, and material contestation. Confidence bands are High, Medium-High, Medium, Medium-Low, and Low. These metrics measure the structure of the cited evidence. They do not replace the substantive row-level analysis.
+These scores describe the structure of the cited evidence. They are not probabilities and should not be marketed as scientific certainty.
 
 ## Intentional deception
 
-Accuracy and intent remain separate. `intentional_deception_established` uses only three public answers:
+Accuracy, fulfillment, and intent remain separate. A False result does not automatically establish a lie.
+
+`intentional_deception_established` uses:
 
 - Yes
 - No
 - Not assessable
 
-The more detailed `deception_intent_status` uses:
+A Yes requires a direct admission, an adjudicated finding that actually addresses intent, or comparably conclusive contemporaneous state-of-mind evidence. Pending and Unresolved rows receive Not assessable.
 
-- Established
-- Suggested but not established
-- Not established
-- Not assessable
+## Accuracy and uncertainty
 
-A Yes requires a direct admission, an adjudicated finding that actually addresses intent, or comparably strong contemporaneous state-of-mind evidence. A false claim, failed prediction, missed deadline, misleading statement, or unsupported accusation does **not** automatically establish a lie.
-
-V4 has no rows marked Established. Five rows are marked Suggested but not established because the cited record contains meaningful evidence of contrary internal or prior knowledge.
-
-## Race, xenophobia, antisemitism, and other sensitive topics
-
-The dataset records descriptive `sensitive_topic_tags` for subjects such as race, religion, immigration, antisemitism, child safety, and anti-Muslim politics. Those tags do not mechanically change the verdict or score.
-
-The site should avoid presenting an editorial label such as “racist” as though it were a fact-check verdict. Instead, it should show the exact proposition, the evidence, the verdict, and the relevant topic tags.
-
-## Personal-life claims
-
-Personal claims are included only when Musk made or authorized a public, material, objectively testable representation and strong evidence exists. Private gossip is excluded.
-
-The first-child claim is Unresolved because two direct first-hand accounts conflict and the public evidence reviewed does not independently resolve the precise circumstances. Excluding it from the score is more defensible than forcing a favorable or unfavorable result.
-
-## Corrections, deletion, and repetition
-
-Correction and repetition fields are bounded to the cited evidence. “No correction documented” does not mean that no correction exists anywhere. Repetition counts are minimum documented counts, not exhaustive social-media counts.
-
-A correction does not erase the original claim. Repetition does not create duplicate scored rows unless Musk makes a materially distinct proposition or deadline.
+No responsible dataset can promise literal 100% error-free historical adjudication. V5 instead guarantees a reproducible rule: every status must be supported by cited evidence, every derived statistic must expose its basis and calculation, and genuine uncertainty must be marked Unresolved rather than forced into a favorable or unfavorable box.
 
 ## Source hierarchy
 
 1. Direct Musk statements, official records, filings, court records, agency data, and authenticated correspondence.
-2. Reuters, Associated Press, The Washington Post, The New York Times, and other established outlets.
-3. Established fact-checkers with transparent sourcing.
+2. Reuters, Associated Press, major national publications, and equivalent established outlets.
+3. Transparent specialist fact-checkers and domain publications that reproduce the original statement.
 4. Secondary sources only when stronger evidence is unavailable, with confidence reduced.
 
-A company or organization involved in a dispute is treated as a party source rather than neutral adjudication. Party-only outcome evidence receives an explicit confidence deduction.
+Company sources are treated as party evidence, not neutral adjudication.
+
+## Reposts and compound statements
+
+A bare repost is not automatically scored as Musk adopting every sentence. A repost can be scored when he adds affirmative commentary, explicitly endorses the proposition, or uses it as evidence for his own conclusion.
+
+Compound statements are split when they contain separable deadlines, capabilities, quantities, or factual premises. V5 splits the 2025 internal-use and 2026 external-production Optimus targets, and splits the narrow emerald-mine ownership denial from the broader denial that an emerald operation existed.
 
 ## Selection bias
 
-The corpus intentionally prioritizes consequential, disputed, and externally verifiable claims. Fact-check archives and news investigations are not random samples of ordinary speech, so the Trust Score must never be described as the percentage of everything Musk says that is true.
-
-The headline score must link to the claim list, excluded rows, evidence audit, source audit, methodology, and version history.
+The corpus prioritizes consequential, disputed, and externally verifiable claims. Fact-check archives and investigative reporting are not random samples of ordinary speech. The score must never be presented as the percentage of everything Musk says that is true.
 
 ## Rating bands
 
@@ -160,28 +140,18 @@ The headline score must link to the claim list, excluded rows, evidence audit, s
 - 25 to 44.9: Not Trustworthy
 - 0 to 24.9: Highly Untrustworthy
 
-These thresholds are editorial judgments and must remain public.
+These thresholds are editorial judgments and remain public.
 
 ## Update procedure
 
-1. Preserve record IDs and publish migration changes.
-2. Add one objectively testable proposition per row.
-3. Cite the original statement and at least one outcome source.
-4. Populate every evaluation basis field.
-5. Calculate evidence metrics from the published rubric.
-6. Apply the verdict-to-points mapping mechanically.
-7. Keep intent separate and require the strict state-of-mind standard.
-8. Recheck Pending and Unresolved rows on a fixed cadence.
-9. Publish corrections and score changes rather than silently replacing history.
-10. Require a second human review before publishing high-impact personal, legal, medical, political, or intent-sensitive verdicts.
-
-## V4 files
-
-- `claims.csv`: complete 143-row claims corpus.
-- `summary.csv`: recalculated Trust Score and category breakdowns.
-- `source-audit.csv`: source-quality and corroboration audit.
-- `evaluation-audit.csv`: field-level evidence audit for eleven evaluation outputs per claim.
-- `migration.csv`: source-provided row-level migration and change log.
-- `classification-key.csv`: machine-readable verdict, intent, confidence, and scoring rules.
-- `methodology.md`: methodology and caveats.
-- `dataset-readme.md`: bundle guide.
+1. Preserve stable record IDs and publish a migration log.
+2. Store one objectively testable proposition per row.
+3. Cite the statement and outcome evidence.
+4. Apply strict pass/fail to matured promises and forecasts.
+5. Keep later delivery separate from the original verdict.
+6. Populate every evidence-basis field.
+7. Calculate evidence metrics from the published rubric.
+8. Keep intent separate and use the strict state-of-mind standard.
+9. Recheck Pending and Unresolved rows on a fixed cadence.
+10. Publish corrections and score changes instead of silently overwriting history.
+11. Require human review before publishing sensitive personal, legal, medical, political, or intent-sensitive verdicts.

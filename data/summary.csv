@@ -1,60 +1,53 @@
 ﻿section,metric,group,count,total_records,points_earned,points_possible,percentage_or_score,conclusion,formula_or_rule,interpretation_and_caveat
-Dataset,Total records,All,143,143,,,,,Count of claims CSV rows,"A source-backed curated corpus, not every statement Elon Musk has ever made."
-Dataset,Claims included in Trust Score,All,123,143,,,86.0,,include_in_trust_score = Yes,Pending and genuinely unresolved claims are excluded from the denominator.
-Dataset,Claims excluded from Trust Score,All,20,143,,,14.0,,include_in_trust_score = No,Excluded rows remain visible in the claims CSV.
-Overall,Elon Musk Trust Score,All,123,143,4225,12300,34.3,Not Trustworthy,sum(score_points) / (scored_claims * 100) * 100,"A reliability score within this curated corpus, not a scientifically representative percentage of every statement Musk makes."
-Overall,Homepage rounded score,All,123,143,4225,12300,34,Not Trustworthy,Round exact Trust Score to nearest whole number,"Display exact score, sample size, selection rules, and methodology on the click-through page."
-Verdict distribution,Claim count,True,13,143,1300,1300,9.1,,Count by verdict_category,Unresolved and Pending are visible but excluded from the Trust Score.
-Verdict distribution,Claim count,Mostly True,16,143,1200,1600,11.2,,Count by verdict_category,Unresolved and Pending are visible but excluded from the Trust Score.
-Verdict distribution,Claim count,Misleading,29,143,1450,2900,20.3,,Count by verdict_category,Unresolved and Pending are visible but excluded from the Trust Score.
-Verdict distribution,Claim count,Unsupported,11,143,275,1100,7.7,,Count by verdict_category,Unresolved and Pending are visible but excluded from the Trust Score.
-Verdict distribution,Claim count,False,54,143,0,5400,37.8,,Count by verdict_category,Unresolved and Pending are visible but excluded from the Trust Score.
-Verdict distribution,Claim count,Unresolved,8,143,,,5.6,,Count by verdict_category,Unresolved and Pending are visible but excluded from the Trust Score.
-Verdict distribution,Claim count,Pending,12,143,,,8.4,,Count by verdict_category,Unresolved and Pending are visible but excluded from the Trust Score.
-By primary domain,Trust Score,Science & Health,7,8,325,700,46.4,Inconsistent,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By primary domain,Trust Score,Personal & Legal,5,7,225,500,45.0,Inconsistent,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By primary domain,Trust Score,Media & Society,14,17,575,1400,41.1,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By primary domain,Trust Score,Business & Technology,71,85,2575,7100,36.3,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By primary domain,Trust Score,Politics & Government,26,26,525,2600,20.2,Highly Untrustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By relationship,Trust Score,Former affiliation,11,12,475,1100,43.2,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By relationship,Trust Score,Current affiliation,77,94,2950,7700,38.3,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By relationship,Trust Score,Public sphere,35,37,800,3500,22.9,Highly Untrustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By organization,Trust Score,PayPal,3,3,225,300,75.0,Generally Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By organization,Trust Score,Neuralink,5,6,325,500,65.0,Generally Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By organization,Trust Score,SpaceX,9,18,400,900,44.4,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By organization,Trust Score,X / Twitter,11,14,450,1100,40.9,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By organization,Trust Score,Tesla,47,51,1700,4700,36.2,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By organization,Trust Score,OpenAI,6,7,200,600,33.3,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By organization,Trust Score,Public discourse,36,38,850,3600,23.6,Highly Untrustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By organization,Trust Score,The Boring Company,5,5,75,500,15.0,Highly Untrustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By organization,Trust Score,Zip2,1,1,0,100,0.0,Highly Untrustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By public discourse category,Trust Score,Personal & Biographical,4,6,200,400,50.0,Inconsistent,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By public discourse category,Trust Score,(Not applicable),85,103,3300,8500,38.8,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By public discourse category,Trust Score,Media & Information,6,6,175,600,29.2,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By public discourse category,Trust Score,Government & Public Spending,7,7,200,700,28.6,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By public discourse category,Trust Score,Accusations About Individuals,3,3,75,300,25.0,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By public discourse category,Trust Score,Immigration & Demographics,5,5,125,500,25.0,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By public discourse category,Trust Score,Legal & Regulatory,2,2,50,200,25.0,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By public discourse category,Trust Score,Politics & Elections,8,8,75,800,9.4,Highly Untrustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By public discourse category,Trust Score,Science & Health,3,3,25,300,8.3,Highly Untrustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By claim type,Trust Score,Promise or Commitment,43,47,1975,4300,45.9,Inconsistent,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By claim type,Trust Score,Factual Assertion,49,52,1400,4900,28.6,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By claim type,Trust Score,Prediction or Forecast,31,43,850,3100,27.4,Not Trustworthy,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-By claim type,Trust Score,Opinion or Rhetoric,0,1,,,,Not Scored,sum(score_points) / scored claims,Small groups are highly sensitive to claim selection; always show the scored-claim count.
-Intent assessment,Claim count,Established,0,143,,,0.0,,Count by deception_intent_status,Intent is evaluated separately from accuracy and fulfillment. No score points are added or subtracted for intent status.
-Intent assessment,Claim count,Suggested but not established,5,143,,,3.5,,Count by deception_intent_status,Intent is evaluated separately from accuracy and fulfillment. No score points are added or subtracted for intent status.
-Intent assessment,Claim count,Not established,118,143,,,82.5,,Count by deception_intent_status,Intent is evaluated separately from accuracy and fulfillment. No score points are added or subtracted for intent status.
-Intent assessment,Claim count,Not assessable,20,143,,,14.0,,Count by deception_intent_status,Intent is evaluated separately from accuracy and fulfillment. No score points are added or subtracted for intent status.
-Intent answer,Was intentional deception established?,Yes,0,143,,,0.0,,Count by intentional_deception_established,“No” means the cited evidence does not meet the strict intent standard; it does not mean the claim was accurate.
-Intent answer,Was intentional deception established?,No,123,143,,,86.0,,Count by intentional_deception_established,“No” means the cited evidence does not meet the strict intent standard; it does not mean the claim was accurate.
-Intent answer,Was intentional deception established?,Not assessable,20,143,,,14.0,,Count by intentional_deception_established,“No” means the cited evidence does not meet the strict intent standard; it does not mean the claim was accurate.
-Evidence confidence,Claim count,High,13,143,,,9.1,,Deterministic band from verdict_confidence_score,"Confidence is calculated from source quality, corroboration, directness, and explicit deductions."
-Evidence confidence,Claim count,Medium-High,81,143,,,56.6,,Deterministic band from verdict_confidence_score,"Confidence is calculated from source quality, corroboration, directness, and explicit deductions."
-Evidence confidence,Claim count,Medium,39,143,,,27.3,,Deterministic band from verdict_confidence_score,"Confidence is calculated from source quality, corroboration, directness, and explicit deductions."
-Evidence confidence,Claim count,Medium-Low,9,143,,,6.3,,Deterministic band from verdict_confidence_score,"Confidence is calculated from source quality, corroboration, directness, and explicit deductions."
-Evidence confidence,Claim count,Low,1,143,,,0.7,,Deterministic band from verdict_confidence_score,"Confidence is calculated from source quality, corroboration, directness, and explicit deductions."
-Evidence audit,Average evidence strength,All,143,143,,,76.8,,Mean of evidence_strength_score,"Source-structure metric, not a substitute for reading the row-level rationale."
-Evidence audit,Average verdict confidence,All,143,143,,,71.9,,Mean of verdict_confidence_score,"Includes explicit deductions for nuanced, disputed, unresolved, or party-only evidence."
-Evidence audit,Rows with at least two unique cited URLs,All,112,143,,,78.3,,evidence_source_count >= 2,Multiple URLs do not guarantee independence; see independent source count.
-Evidence audit,Rows with at least two independent source domains,All,46,143,,,32.2,,independent_source_domain_count >= 2,Company and Musk-controlled domains are not counted as independent outcome domains.
-Evidence audit,Rows with complete field-level audit,All,143,143,,,100.0,,All required evaluation basis fields populated,Each headline evaluation output has a basis and evidence URL list in the main CSV and audit CSV.
+Dataset,Total records,All,155,155,,,,,Count of claims CSV rows,"Curated material public claims, not every statement Musk has ever made."
+Dataset,Claims included in Trust Score,All,138,155,,,89.0,,include_in_trust_score = Yes,Pending and genuinely unresolved rows are excluded.
+Dataset,Claims excluded from Trust Score,All,17,155,,,11.0,,include_in_trust_score = No,Excluded rows remain visible.
+Headline,Exact Trust Score,All,138,155,3100,13800,22.5,Highly Untrustworthy,sum(score_points) / (scored claims × 100) × 100,Promises and predictions use strict pass/fail; factual assertions retain nuanced evidence categories.
+Headline,Homepage rounded score,All,138,155,3100,13800,22,Highly Untrustworthy,Round exact Trust Score to nearest whole number,Display with sample size and methodology link.
+Verdict distribution,True,All,19,155,,,12.3,,Count by canonical verdict,Unresolved and Pending do not affect the denominator.
+Verdict distribution,Mostly True,All,3,155,,,1.9,,Count by canonical verdict,Unresolved and Pending do not affect the denominator.
+Verdict distribution,Misleading,All,14,155,,,9.0,,Count by canonical verdict,Unresolved and Pending do not affect the denominator.
+Verdict distribution,Unsupported,All,11,155,,,7.1,,Count by canonical verdict,Unresolved and Pending do not affect the denominator.
+Verdict distribution,False,All,91,155,,,58.7,,Count by canonical verdict,Unresolved and Pending do not affect the denominator.
+Verdict distribution,Unresolved,All,5,155,,,3.2,,Count by canonical verdict,Unresolved and Pending do not affect the denominator.
+Verdict distribution,Pending,All,12,155,,,7.7,,Count by canonical verdict,Unresolved and Pending do not affect the denominator.
+Strict promise audit,Pass,Promises and forecasts,16,97,,,16.5,,Count by strict_promise_result,A later delivery remains context but never changes a missed original target into a pass.
+Strict promise audit,Fail,Promises and forecasts,67,97,,,69.1,,Count by strict_promise_result,A later delivery remains context but never changes a missed original target into a pass.
+Strict promise audit,Pending,Promises and forecasts,12,97,,,12.4,,Count by strict_promise_result,A later delivery remains context but never changes a missed original target into a pass.
+Strict promise audit,Unresolved,Promises and forecasts,2,97,,,2.1,,Count by strict_promise_result,A later delivery remains context but never changes a missed original target into a pass.
+Strict promise audit,Resolved promise/forecast pass rate,Promises and forecasts,16,83,16,83,19.3,,Passes / resolved promises and forecasts × 100,Binary deadline-and-terms result; no late-delivery partial credit.
+Organization/domain,Trust Score,Neuralink,5,6,100,500,20.0,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Organization/domain,Trust Score,OpenAI,6,7,200,600,33.3,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Organization/domain,Trust Score,PayPal,3,3,225,300,75.0,Generally Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Organization/domain,Trust Score,Public discourse,42,43,950,4200,22.6,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Organization/domain,Trust Score,SpaceX,10,18,0,1000,0.0,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Organization/domain,Trust Score,Tesla,52,55,1325,5200,25.5,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Organization/domain,Trust Score,The Boring Company,5,5,0,500,0.0,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Organization/domain,Trust Score,X / Twitter,14,17,300,1400,21.4,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Organization/domain,Trust Score,Zip2,1,1,0,100,0.0,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Primary domain,Trust Score,Business & Technology,79,92,1675,7900,21.2,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Primary domain,Trust Score,Media & Society,15,17,475,1500,31.7,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Primary domain,Trust Score,Personal & Legal,8,9,325,800,40.6,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Primary domain,Trust Score,Politics & Government,29,29,525,2900,18.1,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Primary domain,Trust Score,Science & Health,7,8,100,700,14.3,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Claim type,Trust Score,Factual Assertion,55,57,1500,5500,27.3,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Claim type,Trust Score,Opinion or Rhetoric,0,1,0,0,0.0,Not scored,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Claim type,Trust Score,Prediction or Forecast,35,46,200,3500,5.7,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Claim type,Trust Score,Promise or Commitment,48,51,1400,4800,29.2,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Public discourse category,Trust Score,Accusations About Individuals,3,3,75,300,25.0,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Public discourse category,Trust Score,Government & Public Spending,8,8,150,800,18.8,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Public discourse category,Trust Score,Immigration & Demographics,6,6,125,600,20.8,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Public discourse category,Trust Score,Legal & Regulatory,2,2,50,200,25.0,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Public discourse category,Trust Score,Media & Information,7,7,175,700,25.0,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Public discourse category,Trust Score,Personal & Biographical,7,8,300,700,42.9,Not Trustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Public discourse category,Trust Score,Politics & Elections,10,10,125,1000,12.5,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Public discourse category,Trust Score,Science & Health,3,3,25,300,8.3,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Public discourse category,Trust Score,Unspecified,92,108,2075,9200,22.6,Highly Untrustworthy,Resolved points / resolved possible points × 100,n is scored claims; total_records includes Pending and Unresolved.
+Intentional deception,Was intentional deception established?,Yes,0,155,,,0.0,,Count by explicit evidence-bounded answer,"A No means intent was not established, not that the claim was true."
+Intentional deception,Was intentional deception established?,No,138,155,,,89.0,,Count by explicit evidence-bounded answer,"A No means intent was not established, not that the claim was true."
+Intentional deception,Was intentional deception established?,Not assessable,17,155,,,11.0,,Count by explicit evidence-bounded answer,"A No means intent was not established, not that the claim was true."
+Evidence confidence,Verdict confidence band,High,25,155,,,16.1,,Count from deterministic evidence-strength rubric,"Confidence measures evidence structure, not a probability of truth."
+Evidence confidence,Verdict confidence band,Medium-High,49,155,,,31.6,,Count from deterministic evidence-strength rubric,"Confidence measures evidence structure, not a probability of truth."
+Evidence confidence,Verdict confidence band,Medium,65,155,,,41.9,,Count from deterministic evidence-strength rubric,"Confidence measures evidence structure, not a probability of truth."
+Evidence confidence,Verdict confidence band,Medium-Low,16,155,,,10.3,,Count from deterministic evidence-strength rubric,"Confidence measures evidence structure, not a probability of truth."
+Evidence confidence,Verdict confidence band,Low,0,155,,,0.0,,Count from deterministic evidence-strength rubric,"Confidence measures evidence structure, not a probability of truth."

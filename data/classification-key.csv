@@ -1,41 +1,31 @@
 ﻿section,key,display_label,score_or_value,include_in_trust_score,definition,calculation_or_rule,notes
-Verdict,True,True,100,Yes,"The central claim is supported, or a commitment was fulfilled materially as stated and on time.",Direct row-level evidence evaluation,False does not automatically mean intentional lie.
-Verdict,Mostly True,Mostly True,75,Yes,"The central claim held up with a meaningful but nonfatal qualification, limited error, delay, or omission.",Direct row-level evidence evaluation,False does not automatically mean intentional lie.
-Verdict,Misleading,Misleading,50,Yes,"Some material portion held up, but context, framing, scope, capability, or timing substantially changed the reasonable takeaway.",Direct row-level evidence evaluation,False does not automatically mean intentional lie.
-Verdict,Unsupported,Unsupported,25,Yes,"The affirmative claim lacks adequate credible support, but the evidence does not justify a definitive False verdict.",Direct row-level evidence evaluation,False does not automatically mean intentional lie.
-Verdict,False,False,0,Yes,"Reliable evidence contradicts the central claim, or a mature measurable commitment was unfulfilled or reversed.",Direct row-level evidence evaluation,False does not automatically mean intentional lie.
-Verdict,Unresolved,Unresolved,,No,Evidence is genuinely insufficient or materially conflicted.,Direct row-level evidence evaluation,False does not automatically mean intentional lie.
-Verdict,Pending,Pending,,No,The deadline or explicit condition has not matured by the evaluation date.,Direct row-level evidence evaluation,False does not automatically mean intentional lie.
-Intent status,Established,Established,,,"Direct admission, adjudicated finding addressing intent, or comparably strong contemporaneous evidence establishes knowing deception.",Separate from Trust Score,Intent status never mechanically changes score points.
-Intent status,Suggested but not established,Suggested but not established,,,"State-of-mind evidence exists, such as contrary internal knowledge or the speaker’s own records, but it is not conclusive.",Separate from Trust Score,Intent status never mechanically changes score points.
-Intent status,Not established,Not established,,,"The claim may be inaccurate or unfulfilled, but cited evidence does not establish intent.",Separate from Trust Score,Intent status never mechanically changes score points.
-Intent status,Not assessable,Not assessable,,,"The underlying claim is Pending or Unresolved, so intent is not responsibly assessed.",Separate from Trust Score,Intent status never mechanically changes score points.
-Intent evidence level,0,0,0,,No state-of-mind evidence or intent not assessable.,0 to 3,Level 3 is required for “Established” absent exceptional documented circumstances.
-Intent evidence level,1,1,1,,"Limited circumstantial evidence, such as a later account conflicting with the speaker’s own prior record.",0 to 3,Level 3 is required for “Established” absent exceptional documented circumstances.
-Intent evidence level,2,2,2,,Material contemporaneous evidence suggesting knowledge of contrary facts.,0 to 3,Level 3 is required for “Established” absent exceptional documented circumstances.
-Intent evidence level,3,3,3,,"Intent established by admission, adjudicated finding, or comparably direct evidence.",0 to 3,Level 3 is required for “Established” absent exceptional documented circumstances.
-Evidence metric,statement_evidence_quality_score,statement_evidence_quality_score,30,,Authenticity and quality of evidence that Musk made the statement.,Deterministic V4 evidence rubric,"These are evidence-structure metrics, not popularity or ideological ratings."
-Evidence metric,outcome_evidence_quality_score,outcome_evidence_quality_score,40,,Quality of the strongest outcome source.,Deterministic V4 evidence rubric,"These are evidence-structure metrics, not popularity or ideological ratings."
-Evidence metric,corroboration_score,corroboration_score,15,,Independent corroboration across outcome sources.,Deterministic V4 evidence rubric,"These are evidence-structure metrics, not popularity or ideological ratings."
-Evidence metric,directness_score,directness_score,15,,How directly the evidence measures the testable proposition or deadline.,Deterministic V4 evidence rubric,"These are evidence-structure metrics, not popularity or ideological ratings."
-Evidence metric,evidence_strength_score,evidence_strength_score,100,,Sum of the four evidence components.,Deterministic V4 evidence rubric,"These are evidence-structure metrics, not popularity or ideological ratings."
-Evidence metric,verdict_confidence_score,verdict_confidence_score,100,,"Evidence strength after explicit deductions for nuance, conflict, unresolved status, or party-only outcome evidence.",Deterministic V4 evidence rubric,"These are evidence-structure metrics, not popularity or ideological ratings."
-Confidence band,85-100,High,85-100,,Band for verdict_confidence_score.,Inclusive range,
-Confidence band,70-84,Medium-High,70-84,,Band for verdict_confidence_score.,Inclusive range,
-Confidence band,55-69,Medium,55-69,,Band for verdict_confidence_score.,Inclusive range,
-Confidence band,40-54,Medium-Low,40-54,,Band for verdict_confidence_score.,Inclusive range,
-Confidence band,0-39,Low,0-39,,Band for verdict_confidence_score.,Inclusive range,
-Trust rating band,80-100,Highly Trustworthy,80-100,,Editorial interpretation of the aggregate Trust Score.,Published threshold,Rating bands are editorial judgments and must remain visible.
-Trust rating band,65-79.9,Generally Trustworthy,65-79.9,,Editorial interpretation of the aggregate Trust Score.,Published threshold,Rating bands are editorial judgments and must remain visible.
-Trust rating band,45-64.9,Inconsistent,45-64.9,,Editorial interpretation of the aggregate Trust Score.,Published threshold,Rating bands are editorial judgments and must remain visible.
-Trust rating band,25-44.9,Not Trustworthy,25-44.9,,Editorial interpretation of the aggregate Trust Score.,Published threshold,Rating bands are editorial judgments and must remain visible.
-Trust rating band,0-24.9,Highly Untrustworthy,0-24.9,,Editorial interpretation of the aggregate Trust Score.,Published threshold,Rating bands are editorial judgments and must remain visible.
-Public discourse category,Politics & Elections,Politics & Elections,,,Streamlined topic category for filtering and breakdowns.,Metadata only,Does not independently change score points.
-Public discourse category,Immigration & Demographics,Immigration & Demographics,,,Streamlined topic category for filtering and breakdowns.,Metadata only,Does not independently change score points.
-Public discourse category,Government & Public Spending,Government & Public Spending,,,Streamlined topic category for filtering and breakdowns.,Metadata only,Does not independently change score points.
-Public discourse category,Science & Health,Science & Health,,,Streamlined topic category for filtering and breakdowns.,Metadata only,Does not independently change score points.
-Public discourse category,Media & Information,Media & Information,,,Streamlined topic category for filtering and breakdowns.,Metadata only,Does not independently change score points.
-Public discourse category,Personal & Biographical,Personal & Biographical,,,Streamlined topic category for filtering and breakdowns.,Metadata only,Does not independently change score points.
-Public discourse category,Accusations About Individuals,Accusations About Individuals,,,Streamlined topic category for filtering and breakdowns.,Metadata only,Does not independently change score points.
-Public discourse category,Legal & Regulatory,Legal & Regulatory,,,Streamlined topic category for filtering and breakdowns.,Metadata only,Does not independently change score points.
-Sensitive topic metadata,sensitive_topic_tags,Sensitive topic tags,,,"Descriptive tags for race, religion, immigration, child safety, personal life, and similar high-risk subjects.",Metadata only,"The dataset scores testable propositions; it does not mechanically label a speaker racist, xenophobic, or antisemitic."
+Promise/forecast verdict,True,True — Fulfilled as Stated,100,Yes,"Every material term was met, including timing, scope, quantity, capability, price, and permanence.",Direct evidence comparison against original terms,No partial credit for lateness.
+Promise/forecast verdict,False,False,0,Yes,"At least one matured material term failed, including a deadline miss, incomplete scope, reversal, or incorrect forecast.",Direct evidence comparison against original terms,Later delivery remains in the record but earns no points.
+Promise/forecast verdict,Pending,Pending,,No,The stated deadline or condition had not matured by the evaluation date.,Excluded until mature,Recheck on a fixed cadence.
+Promise/forecast verdict,Unresolved,Unresolved,,No,Available evidence cannot responsibly establish pass or fail.,Excluded pending stronger evidence,"Uncertainty is visible, not forced into a score."
+Factual verdict,True,True,100,Yes,The central factual proposition is supported by strong evidence.,Direct evidence evaluation,Intent remains separate.
+Factual verdict,Mostly True,Mostly True,75,Yes,The core proposition is accurate but has a meaningful nonfatal qualification.,Direct evidence evaluation,Not available to promises or forecasts in V5.
+Factual verdict,Misleading,Misleading,50,Yes,"Some facts are accurate, but omitted context or framing materially changes the reasonable takeaway.",Direct evidence evaluation,Not available to promises or forecasts in V5.
+Factual verdict,Unsupported,Unsupported,25,Yes,An affirmative claim lacks adequate credible support but is not conclusively disproven.,Burden-of-proof evaluation,Not available to promises or forecasts in V5.
+Factual verdict,False,False,0,Yes,Reliable evidence contradicts the central proposition.,Direct evidence evaluation,False does not automatically mean lie.
+Factual verdict,Unresolved,Unresolved,,No,Evidence is insufficient or materially conflicted.,Excluded from score,Keep visible.
+Strict promise result,Pass,Pass,100,Yes,All material terms met.,Binary result,2012 is not 2010.
+Strict promise result,Fail,Fail,0,Yes,Any matured material term failed.,Binary result,"Hours late, eight days late, or years late all fail the original dated proposition."
+Strict promise result,Not applicable,Not applicable,,As factual verdict dictates,Row is not a promise or forecast.,No strict promise test,
+Rating band,Highly Trustworthy,Highly Trustworthy,80–100,,Editorial conclusion for scores in this range.,Apply to exact score,Thresholds are editorial and public.
+Rating band,Generally Trustworthy,Generally Trustworthy,65–79.9,,Editorial conclusion for scores in this range.,Apply to exact score,Thresholds are editorial and public.
+Rating band,Inconsistent,Inconsistent,45–64.9,,Editorial conclusion for scores in this range.,Apply to exact score,Thresholds are editorial and public.
+Rating band,Not Trustworthy,Not Trustworthy,25–44.9,,Editorial conclusion for scores in this range.,Apply to exact score,Thresholds are editorial and public.
+Rating band,Highly Untrustworthy,Highly Untrustworthy,0–24.9,,Editorial conclusion for scores in this range.,Apply to exact score,Thresholds are editorial and public.
+Intent,Established,Yes,,,"Direct admission, adjudicated intent finding, or comparably conclusive state-of-mind evidence.",Separate from accuracy,None in V5 unless evidence meets the strict standard.
+Intent,Suggested but not established,No,,,Evidence suggests contrary prior knowledge but does not conclusively prove intent.,Separate from accuracy,Public answer remains No.
+Intent,Not established,No,,,Cited evidence does not establish intentional deception.,Separate from accuracy,Does not imply the statement was true.
+Intent,Not assessable,Not assessable,,,Underlying claim is Pending or Unresolved.,Exclude state-of-mind conclusion,
+Evidence metric,Statement evidence quality,0–30,,,Quality and directness of evidence that Musk made the statement.,Published deterministic rubric,
+Evidence metric,Outcome evidence quality,0–40,,,Quality of evidence establishing the outcome.,Published deterministic rubric,
+Evidence metric,Corroboration,0–15,,,Independent corroboration across sources and domains.,Published deterministic rubric,
+Evidence metric,Directness,0–15,,,How directly the evidence resolves the proposition.,Published deterministic rubric,
+Evidence metric,Evidence strength,0–100,,,Sum of four evidence components.,statement + outcome + corroboration + directness,Not a probability.
+Selection rule,Materiality,Included only when material,,,"Claim must be concrete, externally verifiable, and consequential.",Editorial inclusion screen,Avoid padding with trivial truths.
+Assertion mode,Repost,Score only when adopted,,,A bare repost is not automatically treated as adoption.,"Require affirmative caption, explicit endorsement, or use as evidence",
+Compound claims,Split,One proposition per row,,,Materially separable propositions receive separate records.,"Split by deadline, quantity, capability, or factual premise",Prevents one successful fragment from masking failures.
