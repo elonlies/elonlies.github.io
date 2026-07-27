@@ -343,7 +343,20 @@ function normalizeClassificationRows(rows) {
         }
         return left.sourceIndex - right.sourceIndex;
       })
-      .map(({ sourceIndex: _sourceIndex, source_section: _section, ...rule }) => rule);
+      .map((rule) => ({
+        record_type: rule.record_type,
+        classification: rule.classification,
+        score_points: rule.score_points,
+        included_in_score: rule.included_in_score,
+        definition: rule.definition,
+        promise_or_commitment_display:
+          rule.promise_or_commitment_display,
+        prediction_or_forecast_display:
+          rule.prediction_or_forecast_display,
+        factual_assertion_display: rule.factual_assertion_display,
+        implementation_rule: rule.implementation_rule,
+        source_sections: rule.source_sections,
+      }));
   }
 
   return rows

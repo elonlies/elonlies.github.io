@@ -30,6 +30,7 @@ const evaluationMetricFields = Object.freeze({
   correction_status: "correction_status",
   repeated_after_correction: "repeated_after_correction",
   intentional_deception_established: "intentional_deception_established",
+  strict_promise_result: "strict_promise_result",
 });
 
 test("discovers the stable package without encoding a dataset version", () => {
@@ -134,12 +135,12 @@ test("accepts cross-context topic categories and rejects invalid taxonomy or dup
     "topic categories must be usable outside a single organization context",
   );
   assert.ok(
-    baseline.classificationEntries.some(
+    baseline.summary.some(
       (row) =>
         row.section === "Public discourse category" &&
-        row.key === crossContextTopicClaim.public_discourse_category,
+        row.group === crossContextTopicClaim.public_discourse_category,
     ),
-    "the cross-context topic must be declared in classification-key.csv",
+    "the cross-context topic must be reconciled in summary.csv",
   );
 
   const firstClaimCategory =
@@ -162,8 +163,8 @@ test("accepts cross-context topic categories and rejects invalid taxonomy or dup
   const summarySource = await readFile(summaryPath, "utf8");
   const duplicateAliasRows = summarySource
     .split(/\r?\n/)
-    .filter((row) => row.startsWith("By primary domain,Trust Score,"))
-    .map((row) => row.replace("By primary domain", "By subject category"));
+    .filter((row) => row.startsWith("Primary domain,Trust Score,"))
+    .map((row) => row.replace("Primary domain", "By primary domain"));
   assert.ok(duplicateAliasRows.length > 0);
   await writeFile(
     summaryPath,
@@ -175,7 +176,7 @@ test("accepts cross-context topic categories and rejects invalid taxonomy or dup
   );
 });
 
-test("reconciles intent answers and every V4 audit row to claims.csv", async () => {
+test("reconciles intent answers and every current audit row to claims.csv", async () => {
   const {
     claims,
     summary,
@@ -188,7 +189,9 @@ test("reconciles intent answers and every V4 audit row to claims.csv", async () 
   );
 
   const publishedIntentAnswers = summary
-    .filter((row) => row.section === "Intent answer")
+    .filter((row) =>
+      ["Intent answer", "Intentional deception"].includes(row.section),
+    )
     .map((row) => row.group);
   const expectedIntentCounts = Object.fromEntries(
     publishedIntentAnswers.map((answer) => [
@@ -274,4 +277,33 @@ test("reconciles intent answers and every V4 audit row to claims.csv", async () 
       assert.equal(row[field], claim[field], `${row.record_id} ${field}`);
     }
   }
+
+  const strictClaims = claims.filter(
+    (claim) => claim.strict_promise_result !== "Not applicable",
+  );
+  assert.ok(strictClaims.length > 0);
+  for (const claim of strictClaims) {
+    const expected = {
+      Pass: ["True", "100", "Yes"],
+      Fail: ["False", "0", "Yes"],
+      Pending: ["Pending", "", "No"],
+      Unresolved: ["Unresolved", "", "No"],
+    }[claim.strict_promise_result];
+    assert.ok(expected, `${claim.record_id} has an unknown strict result`);
+    assert.deepEqual(
+      [
+        claim.verdict_category,
+        claim.score_points,
+        claim.include_in_trust_score,
+      ],
+      expected,
+      `${claim.record_id} must follow the strict promise rule`,
+    );
+  }
+  assert.ok(
+    strictClaims
+      .filter((claim) => claim.strict_promise_result === "Fail")
+      .every((claim) => claim.score_points === "0"),
+    "later delivery cannot restore points after a strict failure",
+  );
 });

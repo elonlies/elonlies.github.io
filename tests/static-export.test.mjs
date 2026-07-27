@@ -24,6 +24,7 @@ const {
   claims,
   classificationKey,
   classificationEntries,
+  evidenceMetrics,
   migration,
   ratingBands,
   summary,
@@ -40,6 +41,7 @@ const evaluationMetricFields = Object.freeze({
   correction_status: "correction_status",
   repeated_after_correction: "repeated_after_correction",
   intentional_deception_established: "intentional_deception_established",
+  strict_promise_result: "strict_promise_result",
 });
 
 async function readOutput(relativePath) {
@@ -313,11 +315,14 @@ test("generated data reconciles score, taxonomy, intent, audits, and migration",
   assert.equal(classificationKey.length, meta.primaryVerdictCount);
   assert.ok(classificationEntries.length > classificationKey.length);
   assert.ok(
-    classificationEntries.some((row) => row.section === "Intent status"),
+    classificationEntries.some((row) =>
+      ["Intent status", "Intent"].includes(row.section),
+    ),
   );
   assert.ok(
     classificationEntries.some((row) => row.section === "Evidence metric"),
   );
+  assert.ok(evidenceMetrics.length >= 5);
   assert.ok(ratingBands.length > 0);
   assert.equal(migration.length, meta.totalRecords);
   assert.deepEqual(
@@ -357,7 +362,10 @@ test("generated data reconciles score, taxonomy, intent, audits, and migration",
   assert.equal(points, meta.pointsEarned);
   assert.equal(included.length * meta.maxScorePoints, meta.pointsPossible);
   assert.equal(exactScore, meta.exactScore);
-  assert.equal(Math.round(exactScore), meta.roundedScore);
+  assert.equal(
+    Math.round((points / meta.pointsPossible) * 100),
+    meta.roundedScore,
+  );
 
   const citationHeaders = Object.keys(claims[0]).filter((header) =>
     header.endsWith("_url"),
@@ -405,7 +413,9 @@ test("generated data reconciles score, taxonomy, intent, audits, and migration",
   );
   const subjectSummaryRows = summary.filter(
     (row) =>
-      ["By subject category", "By primary domain"].includes(row.section) &&
+      ["By subject category", "By primary domain", "Primary domain"].includes(
+        row.section,
+      ) &&
       row.metric === "Trust Score",
   );
   assert.equal(
@@ -421,7 +431,9 @@ test("generated data reconciles score, taxonomy, intent, audits, and migration",
 
   const overall = summary.find(
     (row) =>
-      row.section === "Overall" && row.metric === "Elon Musk Trust Score",
+      (row.section === "Overall" &&
+        row.metric === "Elon Musk Trust Score") ||
+      (row.section === "Headline" && row.metric === "Exact Trust Score"),
   );
   assert.equal(Number(overall?.points_earned), meta.pointsEarned);
   assert.equal(Number(overall?.points_possible), meta.pointsPossible);
@@ -431,7 +443,9 @@ test("generated data reconciles score, taxonomy, intent, audits, and migration",
   const intentAnswerRows = summary.filter(
     (row) =>
       row.section === "Intent answer" &&
-      row.metric === "Was intentional deception established?",
+        row.metric === "Was intentional deception established?" ||
+      row.section === "Intentional deception" &&
+        row.metric === "Was intentional deception established?",
   );
   assert.ok(intentAnswerRows.length > 0);
   const expectedIntentCounts = Object.fromEntries(
@@ -453,6 +467,29 @@ test("generated data reconciles score, taxonomy, intent, audits, and migration",
             : "No";
       return claim.intentional_deception_established === expected;
     }),
+  );
+
+  const strictClaims = claims.filter(
+    (claim) => claim.strict_promise_result !== "Not applicable",
+  );
+  assert.ok(strictClaims.length > 0);
+  assert.equal(meta.auditMetricCount, 12);
+  assert.ok(
+    strictClaims.every((claim) => {
+      const expected = {
+        Pass: ["True", "100", "Yes"],
+        Fail: ["False", "0", "Yes"],
+        Pending: ["Pending", "", "No"],
+        Unresolved: ["Unresolved", "", "No"],
+      }[claim.strict_promise_result];
+      return (
+        expected &&
+        claim.verdict_category === expected[0] &&
+        claim.score_points === expected[1] &&
+        claim.include_in_trust_score === expected[2]
+      );
+    }),
+    "strict promise outcomes must determine verdict, score, and inclusion",
   );
 
   const claimIds = new Set(claims.map((claim) => claim.record_id));
