@@ -125,7 +125,9 @@ export function ClaimsExplorer({
   const [type, setType] = useState("all");
   const [scope, setScope] = useState("all");
   const [sort, setSort] = useState("oldest");
+  const [filtersOpen, setFiltersOpen] = useState(false);
   const queryReady = useRef(false);
+  const resultsHeaderRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     const timeoutId = window.setTimeout(() => {
@@ -283,11 +285,87 @@ export function ClaimsExplorer({
     setType("all");
     setScope("all");
     setSort("oldest");
+    setFiltersOpen(false);
+  };
+
+  const activeFilters = [
+    category === "all"
+      ? null
+      : {
+          key: "category",
+          label: `Subject: ${category}`,
+          clear: () => setCategory("all"),
+        },
+    topicCategory === "all"
+      ? null
+      : {
+          key: "topic",
+          label: `Topic: ${topicCategory}`,
+          clear: () => setTopicCategory("all"),
+        },
+    context === "all"
+      ? null
+      : {
+          key: "context",
+          label: `Context: ${context}`,
+          clear: () => setContext("all"),
+        },
+    verdict === "all"
+      ? null
+      : {
+          key: "verdict",
+          label: `Verdict: ${formatVerdict(verdict)}`,
+          clear: () => setVerdict("all"),
+        },
+    type === "all"
+      ? null
+      : {
+          key: "type",
+          label: `Type: ${type}`,
+          clear: () => setType("all"),
+        },
+    scope === "all"
+      ? null
+      : {
+          key: "scope",
+          label:
+            scopeOptions.find((option) => option.value === scope)?.label ??
+            scope,
+          clear: () => setScope("all"),
+        },
+    sort === "oldest"
+      ? null
+      : {
+          key: "sort",
+          label:
+            `Sort: ${
+              sortOptions.find((option) => option.value === sort)?.label ??
+              sort
+            }`,
+          clear: () => setSort("oldest"),
+        },
+  ].filter((filter) => filter !== null);
+  const hasActiveRefinements =
+    search.trim() !== "" || activeFilters.length > 0;
+
+  const showMobileResults = () => {
+    setFiltersOpen(false);
+    window.requestAnimationFrame(() => {
+      resultsHeaderRef.current?.scrollIntoView({
+        behavior: window.matchMedia("(prefers-reduced-motion: reduce)").matches
+          ? "auto"
+          : "smooth",
+        block: "start",
+      });
+    });
   };
 
   return (
     <div className="claims-explorer">
-      <div className="claims-filters" aria-label="Filter claim records">
+      <div
+        className={`claims-filters${filtersOpen ? " claims-filters--open" : ""}`}
+        aria-label="Filter claim records"
+      >
         <label className="search-field">
           <span>Search the evidence</span>
           <input
@@ -297,7 +375,35 @@ export function ClaimsExplorer({
             placeholder="Claim, topic, subject, context, or record ID"
           />
         </label>
-        <div className="filter-grid">
+        <button
+          className="mobile-filter-toggle"
+          type="button"
+          aria-expanded={filtersOpen}
+          aria-controls="claim-filter-options"
+          onClick={() => setFiltersOpen((open) => !open)}
+        >
+          <span>
+            Filters &amp; sort
+            {activeFilters.length > 0 ? (
+              <strong>{activeFilters.length}</strong>
+            ) : null}
+          </span>
+          <span className="mobile-filter-toggle__icon" aria-hidden="true">
+            {filtersOpen ? "−" : "+"}
+          </span>
+        </button>
+        {!filtersOpen && activeFilters.length > 0 ? (
+          <div className="mobile-active-filters" aria-label="Active filters">
+            {activeFilters.map((filter) => (
+              <button type="button" key={filter.key} onClick={filter.clear}>
+                <span>{filter.label}</span>
+                <span aria-hidden="true">×</span>
+                <span className="sr-only">Remove {filter.label} filter</span>
+              </button>
+            ))}
+          </div>
+        ) : null}
+        <div className="filter-grid" id="claim-filter-options">
           <label>
             <span>Subject category</span>
             <select
@@ -392,10 +498,29 @@ export function ClaimsExplorer({
               ))}
             </select>
           </label>
+          <div className="mobile-filter-footer">
+            <button
+              className="button"
+              type="button"
+              onClick={showMobileResults}
+            >
+              Show {filteredClaims.length} result
+              {filteredClaims.length === 1 ? "" : "s"}
+            </button>
+            {hasActiveRefinements ? (
+              <button
+                className="text-button"
+                type="button"
+                onClick={clearFilters}
+              >
+                Clear all
+              </button>
+            ) : null}
+          </div>
         </div>
       </div>
 
-      <div className="claims-results-header">
+      <div className="claims-results-header" ref={resultsHeaderRef}>
         <p aria-live="polite">
           Showing <strong>{filteredClaims.length}</strong> of {claims.length} claims
         </p>
