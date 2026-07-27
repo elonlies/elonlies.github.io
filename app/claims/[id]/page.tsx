@@ -88,6 +88,7 @@ function formatMetricName(value: string) {
     correction_status: "Correction status",
     repeated_after_correction: "Repetition after correction",
     intentional_deception_established: "Intentional-deception answer",
+    strict_promise_result: "Strict promise result",
   };
   return (
     labels[value] ??
@@ -126,6 +127,11 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
     ].includes(metric.field),
   );
   const sensitiveTopicTags = splitAuditValues(claim.sensitive_topic_tags);
+  const intentEvidenceLevel = /^\d+(?:\.\d+)?$/.test(
+    claim.deception_intent_evidence_level,
+  )
+    ? `${claim.deception_intent_evidence_level} / 3`
+    : claim.deception_intent_evidence_level;
   const migrationRow = findMigration(claim.record_id);
   const claimIndex = claims.findIndex((item) => item.record_id === claim.record_id);
   const previousClaim = claimIndex > 0 ? claims[claimIndex - 1] : null;
@@ -273,6 +279,19 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                   <dt>Factual accuracy</dt>
                   <dd>{claim.factual_accuracy}</dd>
                 </div>
+                {claim.strict_promise_result &&
+                claim.strict_promise_result !== "Not applicable" ? (
+                  <>
+                    <div>
+                      <dt>Strict promise result</dt>
+                      <dd>{claim.strict_promise_result}</dd>
+                    </div>
+                    <div>
+                      <dt>Status rule version</dt>
+                      <dd>{claim.status_rule_version}</dd>
+                    </div>
+                  </>
+                ) : null}
                 <div>
                   <dt>Canonical classification</dt>
                   <dd>{formatVerdict(claim.verdict_category)}</dd>
@@ -346,6 +365,12 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                   </div>
                 ) : null}
               </dl>
+              {claim.later_delivery_note ? (
+                <p className="detail-note">
+                  <strong>Later-delivery context:</strong>{" "}
+                  {claim.later_delivery_note}
+                </p>
+              ) : null}
               {claim.sensitive_topic_note ? (
                 <p className="detail-note">{claim.sensitive_topic_note}</p>
               ) : null}
@@ -373,7 +398,7 @@ export default async function ClaimPage({ params }: ClaimPageProps) {
                 </div>
                 <div>
                   <dt>Intent evidence level</dt>
-                  <dd>{claim.deception_intent_evidence_level} / 3</dd>
+                  <dd>{intentEvidenceLevel}</dd>
                 </div>
               </dl>
               <p>{claim.deception_intent_rationale}</p>

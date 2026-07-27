@@ -10,6 +10,7 @@ import {
   intentAnswerDistribution,
   intentAssessmentDistribution,
   scoreGroups,
+  strictPromiseAudit,
   supportMetrics,
   verdictToneByName,
 } from "@/lib/data";
@@ -20,6 +21,7 @@ export const metadata: Metadata = {
 };
 
 export default function ScorePage() {
+  const strictAudit = strictPromiseAudit;
   const suggestedIntentCount =
     intentAssessmentDistribution.find(
       (entry) => entry.label === "Suggested but not established",
@@ -98,6 +100,53 @@ export default function ScorePage() {
           </article>
         </div>
       </section>
+
+      {strictAudit ? (
+        <section className="section page-shell section--ruled">
+          <div className="section-heading">
+            <div>
+              <p className="eyebrow">Strict promise audit</p>
+              <h2>
+                {strictAudit.resolvedPassRate}% of resolved promises and
+                forecasts passed every material term.
+              </h2>
+            </div>
+            <p>
+              Timing is part of the proposition. Later delivery is documented as
+              context, but it does not restore points after an original deadline
+              was missed.
+            </p>
+          </div>
+          <div className="metric-ledger">
+            {Object.entries(strictAudit.counts).map(
+              ([result, count]) => (
+                <div className="metric-row" key={result}>
+                  <div>
+                    <h3>{result}</h3>
+                    <p>
+                      {result === "Pass"
+                        ? "Every material term was met."
+                        : result === "Fail"
+                          ? "At least one matured material term failed."
+                          : result === "Pending"
+                            ? "The stated deadline or condition has not matured."
+                            : "The available evidence cannot establish pass or fail."}
+                    </p>
+                  </div>
+                  <div className="metric-row__value">
+                    <strong>
+                      {((count / strictAudit.total) * 100).toFixed(1)}%
+                    </strong>
+                    <span>
+                      {count} / {strictAudit.total}
+                    </span>
+                  </div>
+                </div>
+              ),
+            )}
+          </div>
+        </section>
+      ) : null}
 
       <section className="section page-shell section--ruled">
         <div className="section-heading">
@@ -209,9 +258,10 @@ export default function ScorePage() {
           <p className="eyebrow">All {datasetStats.totalRecords} records</p>
           <h2>Canonical verdict distribution.</h2>
           <p>
-            Display labels adapt to promises and forecasts, while these{" "}
-            {datasetStats.primaryVerdictCount} categories keep the numerical model
-            consistent.
+            Promises and forecasts use strict pass/fail categories when resolved;
+            factual assertions retain the nuanced categories shown here. All{" "}
+            {datasetStats.primaryVerdictCount} canonical outcomes come from the
+            current classification key.
           </p>
         </div>
         <OutcomeLedger />

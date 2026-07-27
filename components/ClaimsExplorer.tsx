@@ -199,6 +199,7 @@ export function ClaimsExplorer({
         claim.sensitive_topic_tags,
         claim.intentional_deception_established,
         claim.deception_intent_status,
+        claim.strict_promise_result,
       ]
         .join(" ")
         .toLowerCase();

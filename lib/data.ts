@@ -73,6 +73,11 @@ export type Claim = {
   confidence_basis: string;
   evidence_audit_status: string;
   evidence_last_reviewed: string;
+  status_rule_version?: string;
+  strict_promise_result?: string;
+  later_delivery_note?: string;
+  audit_disposition?: string;
+  reviewed_against_strict_rule?: string;
   outcome_source_2_url?: string;
   outcome_source_2_title?: string;
   legacy_methodology_notes?: string;
@@ -103,6 +108,7 @@ export type ClaimIndexRecord = Pick<
   | "sensitive_topic_tags"
   | "intentional_deception_established"
   | "deception_intent_status"
+  | "strict_promise_result"
 >;
 
 export type SummaryRow = {
@@ -127,7 +133,9 @@ export type ClassificationRule = {
   definition: string;
   promise_or_commitment_display: string;
   prediction_or_forecast_display: string;
+  factual_assertion_display: string;
   implementation_rule: string;
+  source_sections: string;
 };
 
 export type ClassificationEntry = {
@@ -172,6 +180,7 @@ type DatasetMeta = {
   migrationLabel: string;
   evaluationDate: string;
   evaluationSchemaVersion: string;
+  statusRuleVersion: string | null;
   fieldCount: number;
   totalRecords: number;
   scoredClaims: number;
@@ -206,6 +215,15 @@ type DatasetMeta = {
   downloads: DatasetDownload[];
 };
 
+export type EvidenceMetricDefinition = {
+  field: string;
+  label: string;
+  maximum: number;
+  definition: string;
+  rule: string;
+  notes: string;
+};
+
 export type RatingBand = {
   minimum: number;
   maximum: number;
@@ -219,6 +237,7 @@ type Dataset = {
   summary: SummaryRow[];
   classificationKey: ClassificationRule[];
   classificationEntries: ClassificationEntry[];
+  evidenceMetrics: EvidenceMetricDefinition[];
   ratingBands: RatingBand[];
   migration: MigrationRow[];
 };
@@ -229,6 +248,7 @@ export const claims = dataset.claims;
 export const summary = dataset.summary;
 export const classificationKey = dataset.classificationKey;
 export const classificationEntries = dataset.classificationEntries;
+export const evidenceMetrics = dataset.evidenceMetrics;
 export const ratingBands = dataset.ratingBands;
 export const migration = dataset.migration;
 export const datasetDownloads = dataset.meta.downloads;
@@ -280,6 +300,7 @@ export const claimIndexRecords: ClaimIndexRecord[] = claims.map((claim) => ({
   intentional_deception_established:
     claim.intentional_deception_established,
   deception_intent_status: claim.deception_intent_status,
+  strict_promise_result: claim.strict_promise_result,
 }));
 
 export const verdictLabels: Record<string, string> = Object.fromEntries(
@@ -630,37 +651,51 @@ export const intentAssessmentDistribution = distributionFromCounts(
   datasetStats.intentAssessmentCounts,
 );
 
-const evidenceMetricLabels: Record<string, string> = {
-  statement_evidence_quality_score: "Statement evidence quality",
-  outcome_evidence_quality_score: "Outcome evidence quality",
-  corroboration_score: "Independent corroboration",
-  directness_score: "Evidence directness",
-  evidence_strength_score: "Evidence strength",
-  verdict_confidence_score: "Verdict confidence",
-};
-
-export const evidenceMetricDefinitions = classificationEntries
-  .filter((entry) => entry.section === "Evidence metric")
-  .map((entry) => ({
-    field: entry.key,
-    label:
-      evidenceMetricLabels[entry.key] ??
-      entry.display_label
-        .replaceAll("_", " ")
-        .replace(/\b\w/g, (character) => character.toUpperCase()),
-    maximum: Number(entry.score_or_value),
-    definition: entry.definition,
-    rule: entry.calculation_or_rule,
-    notes: entry.notes,
-  }));
+export const evidenceMetricDefinitions = evidenceMetrics;
 
 export const intentStatusDefinitions = classificationEntries
-  .filter((entry) => entry.section === "Intent status")
+  .filter((entry) => ["Intent status", "Intent"].includes(entry.section))
   .map((entry) => ({
     status: entry.key,
     label: entry.display_label,
     definition: entry.definition,
   }));
+
+const strictPromiseClaims = claims.filter(
+  (claim) =>
+    claim.strict_promise_result &&
+    claim.strict_promise_result !== "Not applicable",
+);
+const strictPromiseResultCounts = Object.fromEntries(
+  ["Pass", "Fail", "Pending", "Unresolved"].map((result) => [
+    result,
+    strictPromiseClaims.filter(
+      (claim) => claim.strict_promise_result === result,
+    ).length,
+  ]),
+) as Record<string, number>;
+const resolvedStrictPromiseCount =
+  strictPromiseResultCounts.Pass + strictPromiseResultCounts.Fail;
+
+export const strictPromiseAudit =
+  strictPromiseClaims.length === 0
+    ? null
+    : {
+        total: strictPromiseClaims.length,
+        resolved: resolvedStrictPromiseCount,
+        counts: strictPromiseResultCounts,
+        resolvedPassRate:
+          resolvedStrictPromiseCount === 0
+            ? null
+            : Number(
+                (
+                  (strictPromiseResultCounts.Pass /
+                    resolvedStrictPromiseCount) *
+                  100
+                ).toFixed(1),
+              ),
+        ruleVersion: datasetStats.statusRuleVersion,
+      };
 
 export const claimTypeNames = [
   ...new Set(claims.map((claim) => claim.claim_type)),

@@ -14,6 +14,7 @@ import {
   ratingBands,
   subjectCategoryNames,
   subjectCategoryScores,
+  strictPromiseAudit,
   topicCategoryNames,
   verdictTone,
 } from "@/lib/data";
@@ -218,6 +219,18 @@ export default function MethodologyPage() {
               point value above comes directly from the current classification-key
               CSV.
             </p>
+            {strictPromiseAudit ? (
+              <div className="callout">
+                <strong>Promises and forecasts use a strict binary test.</strong>
+                <p>
+                  A matured promise or forecast passes only when every material
+                  term—including timing—is met. A missed deadline fails the
+                  original proposition even if the promised result arrives later.
+                  Pending and genuinely unresolved records stay visible but are
+                  excluded until they can be resolved.
+                </p>
+              </div>
+            ) : null}
           </div>
         </section>
 
@@ -238,15 +251,25 @@ export default function MethodologyPage() {
                 </article>
               ))}
             </div>
-            <div className="callout">
-              <strong>Promise and forecast labels adapt to context.</strong>
-              <p>
-                The canonical category controls scoring. A promise may display as
-                “Fulfilled Late,” while a forecast in the same Misleading category
-                may display as “Materially Late.” The category remains visible on
-                every evidence record.
-              </p>
-            </div>
+            {strictPromiseAudit ? (
+              <div className="callout">
+                <strong>Claim type determines the available verdicts.</strong>
+                <p>
+                  Promises and forecasts use True or False once resolved under the
+                  strict material-terms rule. Mostly True, Misleading, and
+                  Unsupported remain available only for factual assertions, where
+                  evidence can support a nuanced finding.
+                </p>
+              </div>
+            ) : (
+              <div className="callout">
+                <strong>Display labels preserve claim context.</strong>
+                <p>
+                  The canonical category controls scoring while the row-level
+                  display label explains how that category applies to the claim.
+                </p>
+              </div>
+            )}
             <div className="callout callout--warning">
               <strong>Contestation is a badge, not a verdict.</strong>
               <p>
